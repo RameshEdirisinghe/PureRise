@@ -41,7 +41,11 @@ const RegisterForm = () => {
     setLoading(true);
     try {
       await register({ name, email, password, role });
-      navigate('/contributor/dashboard', { replace: true });
+      if (role === 'projectOwner') {
+        navigate('/onboarding/campaign-owner', { replace: true });
+      } else {
+        navigate('/contributor/dashboard', { replace: true });
+      }
     } catch (err) {
       setError(getApiError(err));
     } finally {
