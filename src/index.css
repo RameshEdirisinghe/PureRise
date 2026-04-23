@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface text-ink m-0 p-0;
+  }
+}
+
+@layer components {
+  /* ── Input ── */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white
+           text-sm text-ink placeholder:text-ink-faint
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+           transition-all duration-200;
+  }
+
+  /* ── Primary button ── */
+  .btn-primary {
+    @apply w-full py-3 px-6 rounded-xl font-semibold text-sm text-white
+           bg-brand-600 hover:bg-brand-700 active:scale-[.98]
+           flex items-center justify-center gap-2
+           transition-all duration-200 shadow-sm cursor-pointer
+           disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100;
+  }
+
+  /* ── Social button ── */
+  .btn-social {
+    @apply w-full py-2.5 px-5 rounded-xl border border-slate-200 bg-white
+           text-sm font-medium text-ink hover:bg-slate-50 active:scale-[.98]
+           flex items-center justify-center gap-2.5
+           transition-all duration-150 cursor-pointer shadow-sm;
+  }
+
+  /* ── Error banner ── */
+  .error-banner {
+    @apply flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-200
+           text-red-700 text-xs font-medium animate-fade-in;
+  }
+
+  /* ── Auth card ── */
+  .auth-card {
+    @apply bg-white rounded-xl3 shadow-panel p-8 w-full max-w-md animate-slide-up;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    @apply flex items-center gap-3 text-ink-faint text-xs font-medium;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    @apply flex-1 h-px bg-slate-200;
+  }
+}
