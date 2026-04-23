@@ -6,6 +6,8 @@ import RegisterPage from './pages/RegisterPage';
 import ContributorDashboard from './pages/ContributorDashboard';
 import LandingPage from './pages/LandingPage';
 import CampaignOwnerOnboarding from './pages/CampaignOwnerOnboarding';
+import AdminDashboard from './pages/AdminDashboard';
+import CampaignOwnerDashboard from './pages/CampaignOwnerDashboard';
 
 // Simple unauthorized page
 const UnauthorizedPage = () => (
@@ -32,6 +34,16 @@ function App() {
           {/* Contributor-only routes */}
           <Route element={<ProtectedRoute allowedRoles={['contributor']} />}>
             <Route path="/contributor/dashboard" element={<ContributorDashboard />} />
+          </Route>
+
+          {/* Admin-only routes */}
+          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          </Route>
+
+          {/* Campaign Owner routes */}
+          <Route element={<ProtectedRoute allowedRoles={['projectOwner']} />}>
+            <Route path="/campaign-owner/dashboard" element={<CampaignOwnerDashboard />} />
           </Route>
 
           {/* Catch-all */}
