@@ -17,6 +17,7 @@ export interface AuthUser {
   name: string;
   email: string;
   role: UserRole;
+  profileImage?: string;
 }
 
 interface RegisterPayload {
@@ -33,6 +34,8 @@ interface AuthContextValue {
   register: (data: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateProfile: (data: { name?: string; profileImage?: string }) => Promise<void>;
+  uploadProfileImage: (file: File) => Promise<string>;
 }
 
 // ── Context ────────────────────────────────────────────────────────────────────
@@ -86,8 +89,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateProfile = async (data: { name?: string; profileImage?: string }): Promise<void> => {
+    const response = await api.patch<{ data: { user: AuthUser } }>('/auth/profile', data);
+    setUser(response.data.data.user);
+  };
+
+  const uploadProfileImage = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await api.post<{ data: { filePath: string } }>('/auth/profile-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return data.data.filePath;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      register, 
+      logout, 
+      refreshUser,
+      updateProfile,
+      uploadProfileImage
+    }}>
       {children}
     </AuthContext.Provider>
   );

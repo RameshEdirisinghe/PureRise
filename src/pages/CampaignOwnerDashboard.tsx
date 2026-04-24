@@ -59,9 +59,15 @@ const MetricCard = ({ title, value, icon: Icon, subValue }: any) => (
 );
 
 const CampaignOwnerDashboard = () => {
-  const { user } = useAuth();
+  const { user, updateProfile, uploadProfileImage } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // Settings State
+  const [newName, setNewName] = useState(user?.name || '');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.profileImage || null);
   const [walletConnected, setWalletConnected] = useState(false);
 
   const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
@@ -97,6 +103,38 @@ const CampaignOwnerDashboard = () => {
     { id: 2, wallet: '0x3a2...9d1', amount: 2.1, time: '15 mins ago' },
     { id: 3, wallet: '0x9e5...b2c', amount: 0.15, time: '1 hour ago' },
   ];
+
+  const handleProfileUpdate = async () => {
+    try {
+      setIsUpdating(true);
+      let profileImagePath = user?.profileImage;
+
+      if (selectedFile) {
+        profileImagePath = await uploadProfileImage(selectedFile);
+      }
+
+      await updateProfile({ name: newName, profileImage: profileImagePath });
+      toast.success('Profile updated successfully!');
+      setSelectedFile(null);
+    } catch (error) {
+      console.error('Update failed:', error);
+      toast.error('Failed to update profile');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -142,8 +180,12 @@ const CampaignOwnerDashboard = () => {
               <Wallet size={14} />
               {walletConnected ? '0x71C...4f8' : 'Connect Wallet'}
             </button>
-            <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500">
-              <User size={20} />
+            <div className="w-10 h-10 rounded-full bg-brand-50 border border-slate-200 flex items-center justify-center text-brand-500 overflow-hidden shadow-sm">
+              {user?.profileImage ? (
+                <img src={user.profileImage} className="w-full h-full object-cover" alt="Profile" />
+              ) : (
+                <User size={20} />
+              )}
             </div>
           </div>
         </header>
@@ -157,7 +199,7 @@ const CampaignOwnerDashboard = () => {
             <MetricCard title="Next Milestone" value="--" subValue="Days" icon={Calendar} />
           </div>
 
-          {activeTab === 'overview' &&
+          {activeTab === 'overview' && (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
               {/* Active Campaigns List */}
               <div className="xl:col-span-2 space-y-8">
@@ -291,8 +333,14 @@ const CampaignOwnerDashboard = () => {
                   {contributions.map((c) => (
                     <div key={c.id} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
-                          <User size={14} />
+                        <div className="w-10 h-10 rounded-full bg-brand-50 border border-slate-200 flex items-center justify-center text-brand-500 overflow-hidden shadow-sm">
+                          {user?.profileImage ? (
+                            <img src={user.profileImage} className="w-full h-full object-cover" alt="Profile" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-brand-100 text-brand-600 font-bold">
+                              {user?.name?.charAt(0)}
+                            </div>
+                          )}
                         </div>
                         <div>
                           <p className="text-[11px] font-bold text-ink">{c.wallet}</p>
@@ -338,9 +386,9 @@ const CampaignOwnerDashboard = () => {
                 </div>
               </div>
             </div>
-          }
+          )}
 
-          {activeTab === 'campaigns' &&
+          {activeTab === 'campaigns' && (
             <div className="space-y-8">
               <div className="bg-white rounded-[32px] p-8 border border-slate-100">
                 <div className="flex items-center justify-between mb-8">
@@ -437,9 +485,63 @@ const CampaignOwnerDashboard = () => {
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="bg-white rounded-[40px] border border-slate-100 p-12 max-w-2xl">
+              <h2 className="text-2xl font-bold text-ink mb-8">Founder Settings</h2>
+              <div className="space-y-6">
+                <div className="flex items-center gap-6 pb-6 border-b border-slate-50">
+                  <div className="relative group">
+                    <div className="w-20 h-20 rounded-[28px] bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-2xl shadow-inner overflow-hidden border-2 border-white">
+                      {avatarPreview ? (
+                        <img src={avatarPreview} className="w-full h-full object-cover" alt="Profile" />
+                      ) : (
+                        <span>{user?.name?.charAt(0)}</span>
+                      )}
+                    </div>
+                    <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-[28px] cursor-pointer transition-opacity">
+                      <input type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+                      <Settings className="text-white" size={20} />
+                    </label>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-ink text-lg">{user?.name}</h3>
+                    <p className="text-slate-400 text-sm" style={{ fontFamily: '"Times New Roman", Times, serif' }}>{user?.email}</p>
+                    <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest mt-1">Project Owner Account</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                    <input 
+                      type="text" 
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      className="w-full bg-slate-50 border-2 border-transparent rounded-xl py-3 px-4 text-sm font-medium outline-none focus:border-brand-500/20 focus:bg-white transition-all" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                    <input type="email" defaultValue={user?.email} disabled className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-sm font-medium outline-none opacity-60 cursor-not-allowed" />
+                  </div>
+                </div>
+
+                <div className="pt-6">
+                  <button 
+                    onClick={handleProfileUpdate}
+                    disabled={isUpdating}
+                    className="w-full bg-brand-500 text-white rounded-xl py-4 font-bold text-sm hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isUpdating ? 'Saving Changes...' : 'Save Profile Changes'}
+                  </button>
                 </div>
               </div>
-            }
+            </div>
+          )}
         </div>
       </main>
     </div>

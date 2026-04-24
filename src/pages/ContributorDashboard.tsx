@@ -153,18 +153,23 @@ const CampaignCard = ({ campaign, isSaved, onToggleSave, onViewDetails }: any) =
 };
 
 const ContributorDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile, uploadProfileImage } = useAuth();
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState('overview');
-  const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [walletConnected, setWalletConnected] = useState(false);
   const [savedCampaigns, setSavedCampaigns] = useState<string[]>([]);
   const [showWatchlist, setShowWatchlist] = useState(false);
-
   const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Settings State
+  const [newName, setNewName] = useState(user?.name || '');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.profileImage || null);
 
   useEffect(() => {
     fetchActiveCampaigns();
@@ -209,6 +214,38 @@ const ContributorDashboard = () => {
   };
 
   const categories = ['All', 'Education', 'Healthcare', 'Environment', 'Community', 'Startup', 'Technology'];
+
+  const handleProfileUpdate = async () => {
+    try {
+      setIsUpdating(true);
+      let profileImagePath = user?.profileImage;
+
+      if (selectedFile) {
+        profileImagePath = await uploadProfileImage(selectedFile);
+      }
+
+      await updateProfile({ name: newName, profileImage: profileImagePath });
+      toast.success('Profile updated successfully!');
+      setSelectedFile(null);
+    } catch (error) {
+      console.error('Update failed:', error);
+      toast.error('Failed to update profile');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const filteredCampaigns = campaigns.filter(c => {
     const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -297,6 +334,14 @@ const ContributorDashboard = () => {
               <Wallet size={14} />
               {walletConnected ? '0x71C...4f8' : 'Connect Wallet'}
             </button>
+
+            <div className="w-11 h-11 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 overflow-hidden shadow-sm group cursor-pointer hover:border-brand-300 transition-all" onClick={() => setActiveTab('settings')}>
+              {user?.profileImage ? (
+                <img src={user.profileImage} className="w-full h-full object-cover" alt="Profile" />
+              ) : (
+                <span className="text-sm font-black">{user?.name?.charAt(0)}</span>
+              )}
+            </div>
           </div>
         </header>
 
@@ -440,30 +485,49 @@ const ContributorDashboard = () => {
               <h2 className="text-2xl font-bold text-ink mb-8">Profile Settings</h2>
               <div className="space-y-6">
                 <div className="flex items-center gap-6 pb-6 border-b border-slate-50">
-                  <div className="w-20 h-20 rounded-[28px] bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-2xl shadow-inner">
-                    {user?.name?.charAt(0)}
+                  <div className="relative group">
+                    <div className="w-20 h-20 rounded-[28px] bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-2xl shadow-inner overflow-hidden border-2 border-white">
+                      {avatarPreview ? (
+                        <img src={avatarPreview} className="w-full h-full object-cover" alt="Profile" />
+                      ) : (
+                        <span>{user?.name?.charAt(0)}</span>
+                      )}
+                    </div>
+                    <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-[28px] cursor-pointer transition-opacity">
+                      <input type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+                      <Settings className="text-white" size={20} />
+                    </label>
                   </div>
                   <div>
                     <h3 className="font-bold text-ink text-lg">{user?.name}</h3>
                     <p className="text-slate-400 text-sm" style={{ fontFamily: '"Times New Roman", Times, serif' }}>{user?.email}</p>
-                    <button className="mt-2 text-xs font-bold text-brand-500 hover:underline">Change Avatar</button>
+                    <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest mt-1">Contributor Account</p>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
-                    <input type="text" defaultValue={user?.name} className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-brand-500/20" />
+                    <input 
+                      type="text" 
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      className="w-full bg-slate-50 border-2 border-transparent rounded-xl py-3 px-4 text-sm font-medium outline-none focus:border-brand-500/20 focus:bg-white transition-all" 
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
                     <input type="email" defaultValue={user?.email} disabled className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 text-sm font-medium outline-none opacity-60 cursor-not-allowed" />
                   </div>
                 </div>
-                
+
                 <div className="pt-6">
-                  <button className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-ink transition-all shadow-lg shadow-slate-900/20">
-                    Save Changes
+                  <button 
+                    onClick={handleProfileUpdate}
+                    disabled={isUpdating}
+                    className="w-full bg-brand-500 text-white rounded-xl py-4 font-bold text-sm hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isUpdating ? 'Saving Changes...' : 'Save Profile Changes'}
                   </button>
                 </div>
               </div>
