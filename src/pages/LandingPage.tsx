@@ -314,7 +314,7 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
           <div className="border-t border-surface-muted pt-6 flex flex-wrap justify-between items-center gap-3 text-ink-faint text-[.78rem]">
-            <div>© 2024 PureRaise Protocol. All rights reserved.</div>
+            <div>© 2026 PureRaise Protocol. All rights reserved.</div>
             <div className="flex gap-6">
               <a href="#" className="text-ink-faint hover:text-brand-500 no-underline transition-colors">Privacy Policy</a>
               <a href="#" className="text-ink-faint hover:text-brand-500 no-underline transition-colors">Terms of Service</a>

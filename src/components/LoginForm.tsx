@@ -77,21 +77,6 @@ const LoginForm = () => {
         </p>
       </div>
 
-      {/* Google SSO (placeholder) */}
-      <button type="button" className="btn-social mb-5">
-        <GoogleIcon />
-        <span>Continue with Google</span>
-      </button>
-
-      <div className="divider mb-5">OR CONTINUE WITH EMAIL</div>
-
-      {/* Error */}
-      {error && (
-        <div className="error-banner mb-4">
-          <AlertIcon />
-          <span>{error}</span>
-        </div>
-      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
@@ -152,18 +137,6 @@ const LoginForm = () => {
           </div>
         </div>
 
-        {/* Remember me */}
-        <label className="flex items-center gap-2 cursor-pointer select-none group">
-          <input
-            type="checkbox"
-            checked={remember}
-            onChange={(e) => setRemember(e.target.checked)}
-            className="w-4 h-4 rounded border-slate-300 text-brand-600 accent-brand-600 cursor-pointer"
-          />
-          <span className="text-xs text-ink-muted group-hover:text-ink transition-colors">
-            Stay signed in for 30 days
-          </span>
-        </label>
 
         {/* Submit */}
         <button

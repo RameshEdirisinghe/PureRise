@@ -61,7 +61,7 @@ const LoginPage = () => (
               to="/register" 
               className="text-[0.75rem] font-bold text-brand-600 hover:text-brand-700 transition-colors underline underline-offset-4"
             >
-              Start as Owner
+              Start as Creator
             </Link>
           </div>
         </div>
@@ -69,7 +69,7 @@ const LoginPage = () => (
 
       {/* Footer */}
       <footer className="px-12 py-10 flex justify-between items-center text-[0.65rem] text-ink-faint font-bold uppercase tracking-[0.15em]">
-        <span>© 2025</span>
+        <span>© 2026</span>
         <div className="flex gap-6">
           <a href="#" className="hover:text-ink transition-colors">Privacy</a>
           <a href="#" className="hover:text-ink transition-colors">Help</a>
