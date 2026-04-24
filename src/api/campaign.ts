@@ -167,3 +167,19 @@ export const reviewCampaignApi = async (
     throw error;
   }
 };
+
+/**
+ * Fetch all active campaigns for discovery
+ */
+export const getActiveCampaignsApi = async (): Promise<CampaignResponse[]> => {
+  try {
+    const { data } = await api.get<{
+      success: boolean;
+      message: string;
+      data: CampaignResponse[];
+    }>('/campaigns/active');
+    return data.data;
+  } catch (error) {
+    throw error;
+  }
+};
