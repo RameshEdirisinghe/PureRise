@@ -18,10 +18,13 @@ import {
   Calendar as CalendarIcon,
   User,
   Bell,
-  TrendingUp
+  TrendingUp,
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { createCampaignApi, uploadCampaignMediaApi } from '../api/campaign';
+import { getApiError } from '../context/AuthContext';
 
 // --- Sub-components ---
 
@@ -89,7 +92,7 @@ const CreateCampaign = () => {
     title: '',
     summary: '',
     description: '',
-    category: 'Healthcare',
+    category: 'startup',
     fundingGoal: '',
     endDate: '',
     coverImage: '' // Stores the path from Supabase
@@ -100,26 +103,21 @@ const CreateCampaign = () => {
     if (!file) return;
 
     try {
+      setError('');
       setUploadLoading(true);
-      const data = new FormData();
-      data.append('file', file);
-
-      // We'll use axios to call our new endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/campaigns/media-upload`, {
-        method: 'POST',
-        credentials: 'include',
-        body: data
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        setFormData(prev => ({ ...prev, coverImage: result.data.filePath }));
+      
+      // Use the campaign API client for consistent error handling and automatic cookie inclusion
+      const result = await uploadCampaignMediaApi(file);
+      setFormData(prev => ({ ...prev, coverImage: result.filePath }));
+      
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      // Check if there's a helpful user-friendly message from the API client
+      if (err.userFriendlyMessage) {
+        setError(err.userFriendlyMessage);
       } else {
-        alert(result.message || 'Upload failed');
+        setError(getApiError(err) || 'Failed to upload media. Please try again.');
       }
-    } catch (error) {
-      console.error('Upload error:', error);
-      alert('Failed to upload media');
     } finally {
       setUploadLoading(false);
     }
@@ -128,6 +126,9 @@ const CreateCampaign = () => {
   const [milestones, setMilestones] = useState([
     { title: '', description: '', percentage: 0 }
   ]);
+
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const totalPercentage = milestones.reduce((sum, m) => sum + (Number(m.percentage) || 0), 0);
 
@@ -152,12 +153,57 @@ const CreateCampaign = () => {
   };
 
   const handleDeploy = async () => {
-    setDeploying(true);
-    // Simulate Blockchain Interaction
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    setDeploying(false);
-    alert('Campaign Deployed Successfully to Ethereum Mainnet!');
-    navigate('/campaign-owner/dashboard');
+    try {
+      setError('');
+      setSuccessMessage('');
+      
+      // Validate required fields
+      if (!formData.title || !formData.summary || !formData.description) {
+        setError('Please fill in all campaign details.');
+        return;
+      }
+
+      if (!formData.coverImage) {
+        setError('Please upload a cover image for your campaign.');
+        return;
+      }
+
+      if (totalPercentage !== 100) {
+        setError('Milestone percentages must total exactly 100%.');
+        return;
+      }
+
+      setDeploying(true);
+
+      // Call the backend API to create the campaign
+      const response = await createCampaignApi({
+        title: formData.title,
+        summary: formData.summary,
+        description: formData.description,
+        category: (formData.category.toLowerCase() as any),
+        coverImage: formData.coverImage,
+        targetFunding: Number(formData.fundingGoal),
+        endDate: formData.endDate,
+        goalDescription: formData.description.slice(0, 1000), // Ensure it stays within 1000 char limit
+        milestones: milestones.map(m => ({
+          title: m.title,
+          description: m.description || m.title, // Fallback to title if description empty
+          percentage: Number(m.percentage)
+        }))
+      });
+
+      setSuccessMessage('🎉 Campaign created successfully! Awaiting admin approval...');
+      
+      // Redirect after a brief delay to show success message
+      setTimeout(() => {
+        navigate('/campaign-owner/dashboard');
+      }, 2000);
+
+    } catch (err) {
+      console.error('Deploy error:', err);
+      setError(getApiError(err) || 'Failed to create campaign. Please try again.');
+      setDeploying(false);
+    }
   };
 
   return (
@@ -213,6 +259,26 @@ const CreateCampaign = () => {
         <div className="p-12 max-w-5xl mx-auto" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
           <Stepper currentStep={step} />
 
+          {/* Error Banner */}
+          {error && (
+            <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3">
+              <AlertCircle size={20} className="text-red-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-red-900">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Success Banner */}
+          {successMessage && (
+            <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-2xl flex items-start gap-3">
+              <CheckCircle2 size={20} className="text-green-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-green-900">{successMessage}</p>
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-[40px] p-12 border border-slate-100 shadow-sm transition-all duration-500">
             
             {/* STEP 1: THE VISION */}
@@ -252,10 +318,12 @@ const CreateCampaign = () => {
                       onChange={handleInputChange}
                       className="w-full p-4 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-brand-500/20 font-sans"
                     >
-                      <option>Healthcare</option>
-                      <option>Education</option>
-                      <option>Environment</option>
-                      <option>Community</option>
+                      <option value="startup">Startup</option>
+                      <option value="medical">Medical</option>
+                      <option value="education">Education</option>
+                      <option value="social">Social Impact</option>
+                      <option value="technology">Technology</option>
+                      <option value="personal">Personal</option>
                     </select>
                   </div>
                 </div>
@@ -495,7 +563,11 @@ const CreateCampaign = () => {
             {/* NAVIGATION BUTTONS */}
             <div className="mt-16 flex items-center justify-between pt-8 border-t border-slate-50">
               <button 
-                onClick={() => setStep(step - 1)}
+                onClick={() => {
+                  setError('');
+                  setSuccessMessage('');
+                  setStep(step - 1);
+                }}
                 disabled={step === 1 || deploying}
                 className="flex items-center gap-2 px-8 py-4 rounded-2xl text-slate-400 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all disabled:opacity-0 font-sans"
               >
@@ -505,8 +577,11 @@ const CreateCampaign = () => {
               
               {step < 4 ? (
                 <button 
-                  onClick={() => setStep(step + 1)}
-                  disabled={(step === 3 && totalPercentage !== 100) || !formData.title}
+                  onClick={() => {
+                    setError('');
+                    setStep(step + 1);
+                  }}
+                  disabled={(step === 3 && totalPercentage !== 100) || !formData.title || deploying}
                   className="flex items-center gap-2 px-10 py-4 bg-brand-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-ink shadow-xl shadow-brand-900/10 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale font-sans"
                 >
                   Next Step
@@ -515,13 +590,13 @@ const CreateCampaign = () => {
               ) : (
                 <button 
                   onClick={handleDeploy}
-                  disabled={deploying}
-                  className="flex items-center gap-3 px-12 py-4 bg-brand-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-brand-700 shadow-xl shadow-brand-600/20 transition-all active:scale-95 disabled:opacity-70 font-sans"
+                  disabled={deploying || totalPercentage !== 100 || !formData.coverImage}
+                  className="flex items-center gap-3 px-12 py-4 bg-brand-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-brand-700 shadow-xl shadow-brand-600/20 transition-all active:scale-95 disabled:opacity-70 disabled:grayscale font-sans"
                 >
                   {deploying ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Interacting with Blockchain...
+                      Creating Campaign...
                     </>
                   ) : (
                     <>

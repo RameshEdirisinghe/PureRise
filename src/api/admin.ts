@@ -10,7 +10,7 @@ export const reviewRequest = async (requestId: string, status: 'approved' | 'rej
   return response.data;
 };
 
-export const getSignedUrl = async (filePath: string) => {
-  const response = await api.get(`/admin/signed-url`, { params: { filePath } });
+export const getSignedUrl = async (filePath: string, bucket: string = 'kyc-documents') => {
+  const response = await api.get(`/admin/signed-url`, { params: { filePath, bucket } });
   return response.data;
 };
