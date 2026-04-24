@@ -6,7 +6,7 @@ import {
   CheckCircle2, X, Megaphone, Milestone,
   TrendingUp, Clock, AlertCircle
 } from 'lucide-react';
-import { getPendingRequests, reviewRequest, getSignedUrl } from '../api/admin';
+import { getPendingRequests, reviewRequest, getSignedUrl, getAllUsers, updateUserStatus } from '../api/admin';
 import { getPendingCampaignsApi, reviewCampaignApi } from '../api/campaign';
 import { getApiError } from '../utils/errorHelper';
 
@@ -34,6 +34,16 @@ interface OnboardingRequest {
   submittedAt: string;
 }
 
+interface UserManagement {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  accountStatus: string;
+  createdAt: string;
+  profileImage: string | null;
+}
+
 interface Campaign {
   _id: string;
   title: string;
@@ -58,7 +68,8 @@ interface Campaign {
 }
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState<'kyc' | 'campaigns'>('kyc');
+  const [activeTab, setActiveTab] = useState<'kyc' | 'campaigns' | 'users'>('kyc');
+  const [userRoleFilter, setUserRoleFilter] = useState<'all' | 'contributor' | 'projectOwner' | 'admin'>('all');
   
   // KYC State
   const [requests, setRequests] = useState<OnboardingRequest[]>([]);
@@ -67,6 +78,9 @@ const AdminDashboard = () => {
   // Campaign State
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+
+  // User Management State
+  const [users, setUsers] = useState<UserManagement[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -93,6 +107,17 @@ const AdminDashboard = () => {
       setLoading(true);
       const data = await getPendingCampaignsApi();
       setCampaigns(data);
+    } catch (err) {
+      setError(getApiError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllUsers();
+      setUsers(data.data);
     } catch (err) {
       setError(getApiError(err));
     } finally {
@@ -151,8 +176,10 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (activeTab === 'kyc') {
       fetchRequests();
-    } else {
+    } else if (activeTab === 'campaigns') {
       fetchCampaigns();
+    } else {
+      fetchUsers();
     }
   }, [activeTab]);
 
@@ -185,6 +212,19 @@ const AdminDashboard = () => {
       alert(getApiError(err));
     } finally {
       setReviewing(false);
+    }
+  };
+  const handleToggleUserBlock = async (userId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+    const action = currentStatus === 'suspended' ? 'unblock' : 'block';
+    
+    if (!window.confirm(`Are you sure you want to ${action} this user?`)) return;
+
+    try {
+      await updateUserStatus(userId, newStatus);
+      setUsers(prev => prev.map(u => u._id === userId ? { ...u, accountStatus: newStatus } : u));
+    } catch (err) {
+      alert(getApiError(err));
     }
   };
 
@@ -226,7 +266,12 @@ const AdminDashboard = () => {
             <Megaphone size={18} />
             Campaign Reviews
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-50 font-medium text-sm transition-all">
+          <button 
+            onClick={() => setActiveTab('users')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+              activeTab === 'users' ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10' : 'text-slate-400 hover:bg-slate-50'
+            }`}
+          >
             <Users size={18} />
             User Management
           </button>
@@ -239,11 +284,11 @@ const AdminDashboard = () => {
         <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 z-20">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-bold text-ink">
-              {activeTab === 'kyc' ? 'KYC Verifications' : 'Campaign Reviews'}
+              {activeTab === 'kyc' ? 'KYC Verifications' : activeTab === 'campaigns' ? 'Campaign Reviews' : 'User Management'}
             </h1>
             <div className="h-6 w-px bg-slate-200" />
             <span className="text-xs font-bold text-brand-500 bg-brand-50 px-2 py-1 rounded-full uppercase tracking-wider">
-              {activeTab === 'kyc' ? requests.length : campaigns.length} Pending
+              {activeTab === 'kyc' ? requests.length : activeTab === 'campaigns' ? campaigns.length : users.length} {activeTab === 'users' ? 'Users' : 'Pending'}
             </span>
           </div>
 
@@ -276,7 +321,7 @@ const AdminDashboard = () => {
                 <div key={i} className="bg-white rounded-3xl h-64 animate-pulse border border-slate-100" />
               ))}
             </div>
-          ) : activeTab === 'kyc' ? (
+          ) : activeTab === 'kyc' ? 
             // KYC Verifications List
             requests.length === 0 ? (
               <div className="bg-white rounded-[32px] p-20 flex flex-col items-center justify-center text-center border border-slate-100 shadow-sm">
@@ -331,7 +376,7 @@ const AdminDashboard = () => {
                 ))}
               </div>
             )
-          ) : (
+           : activeTab === 'campaigns' ? 
             // Campaign Reviews List
             campaigns.length === 0 ? (
               <div className="bg-white rounded-[32px] p-20 flex flex-col items-center justify-center text-center border border-slate-100 shadow-sm">
@@ -391,6 +436,101 @@ const AdminDashboard = () => {
                 ))}
               </div>
             )
+           : (
+            // User Management List
+            <div className="space-y-8">
+              <div className="flex items-center gap-2 p-1.5 bg-white border border-slate-100 rounded-2xl w-fit">
+                {[
+                  { id: 'all', label: 'All Users' },
+                  { id: 'contributor', label: 'Contributors' },
+                  { id: 'projectOwner', label: 'Campaign Owners' },
+                  { id: 'admin', label: 'Admins' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setUserRoleFilter(tab.id as any)}
+                    className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                      userRoleFilter === tab.id 
+                        ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10' 
+                        : 'text-slate-400 hover:text-ink'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="bg-white rounded-[40px] border border-slate-100 overflow-hidden shadow-sm">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/50 border-b border-slate-100">
+                      <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">User</th>
+                      <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Role</th>
+                      <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                      <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {users
+                      .filter(u => userRoleFilter === 'all' || u.role === userRoleFilter)
+                      .map((u) => (
+                        <tr key={u._id} className="group hover:bg-slate-50/50 transition-colors">
+                          <td className="px-8 py-6">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold overflow-hidden shadow-inner">
+                                {u.profileImage ? (
+                                  <img src={getImageUrl(u.profileImage)} className="w-full h-full object-cover" alt="" />
+                                ) : (
+                                  u.name.charAt(0)
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-bold text-ink leading-tight">{u.name}</p>
+                                <p className="text-xs text-slate-400 font-medium">{u.email}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-8 py-6">
+                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                              u.role === 'admin' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                              u.role === 'projectOwner' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                              'bg-slate-50 text-slate-500 border-slate-100'
+                            }`}>
+                              {u.role === 'projectOwner' ? 'Owner' : u.role}
+                            </span>
+                          </td>
+                          <td className="px-8 py-6">
+                            <span className={`flex items-center gap-1.5 text-xs font-bold ${
+                              u.accountStatus === 'active' ? 'text-green-500' : 
+                              u.accountStatus === 'suspended' ? 'text-red-500' : 'text-amber-500'
+                            }`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${
+                                u.accountStatus === 'active' ? 'bg-green-500' : 
+                                u.accountStatus === 'suspended' ? 'bg-red-500' : 'bg-amber-500'
+                              }`} />
+                              {u.accountStatus.charAt(0).toUpperCase() + u.accountStatus.slice(1)}
+                            </span>
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            {u.role !== 'admin' && (
+                              <button 
+                                onClick={() => handleToggleUserBlock(u._id, u.accountStatus)}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                                  u.accountStatus === 'suspended'
+                                    ? 'bg-green-50 text-green-600 border border-green-100 hover:bg-green-600 hover:text-white'
+                                    : 'bg-red-50 text-red-600 border border-red-100 hover:bg-red-600 hover:text-white'
+                                }`}
+                              >
+                                {u.accountStatus === 'suspended' ? 'Unblock' : 'Block User'}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </div>
       </main>
