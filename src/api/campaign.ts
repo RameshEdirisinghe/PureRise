@@ -34,6 +34,11 @@ export interface CampaignResponse {
   goalDescription: string;
   endDate: string;
   milestones: any[];
+  owner?: {
+    name: string;
+    email: string;
+    profileImage?: string;
+  };
 }
 
 /**
@@ -178,6 +183,22 @@ export const getActiveCampaignsApi = async (): Promise<CampaignResponse[]> => {
       message: string;
       data: CampaignResponse[];
     }>('/campaigns/active');
+    return data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Fetch a single campaign by ID
+ */
+export const getCampaignByIdApi = async (id: string): Promise<CampaignResponse> => {
+  try {
+    const { data } = await api.get<{
+      success: boolean;
+      message: string;
+      data: CampaignResponse;
+    }>(`/campaigns/${id}`);
     return data.data;
   } catch (error) {
     throw error;

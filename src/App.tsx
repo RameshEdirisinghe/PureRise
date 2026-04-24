@@ -10,6 +10,7 @@ import CampaignOwnerOnboarding from './pages/CampaignOwnerOnboarding';
 import AdminDashboard from './pages/AdminDashboard';
 import CampaignOwnerDashboard from './pages/CampaignOwnerDashboard';
 import CreateCampaign from './pages/CreateCampaign';
+import CampaignDetails from './pages/CampaignDetails';
 
 // Simple unauthorized page
 const UnauthorizedPage = () => (
@@ -37,6 +38,7 @@ function App() {
           {/* Contributor-only routes */}
           <Route element={<ProtectedRoute allowedRoles={['contributor']} />}>
             <Route path="/contributor/dashboard" element={<ContributorDashboard />} />
+            <Route path="/campaign/:id" element={<CampaignDetails />} />
           </Route>
 
           {/* Admin-only routes */}

@@ -51,7 +51,17 @@ const CategoryPill = ({ label, active, onClick }: any) => (
 );
 
 const CampaignCard = ({ campaign, isSaved, onToggleSave, onViewDetails }: any) => {
-  const progress = Math.min(Math.round((0 / campaign.targetFunding) * 100), 100); // Placeholder for actual contribution total
+  const progress = Math.min(Math.round((0 / campaign.targetFunding) * 100), 100); 
+
+  const calculateDaysRemaining = (dateStr: string) => {
+    const end = new Date(dateStr);
+    const now = new Date();
+    const diff = end.getTime() - now.getTime();
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    return days > 0 ? days : 0;
+  };
+
+  const daysRemaining = calculateDaysRemaining(campaign.endDate);
 
   return (
     <div className="group bg-white rounded-[32px] border border-slate-100 overflow-hidden hover:border-brand-200 hover:shadow-2xl hover:shadow-brand-500/5 transition-all duration-500 relative">
@@ -132,7 +142,7 @@ const CampaignCard = ({ campaign, isSaved, onToggleSave, onViewDetails }: any) =
               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Remaining</p>
               <div className="flex items-center gap-1 text-sm font-bold text-ink">
                 <Clock size={12} className="text-brand-500" />
-                <span>30d</span>
+                <span>{daysRemaining}d</span>
               </div>
             </div>
           </div>
@@ -207,7 +217,7 @@ const ContributorDashboard = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const watchlistItems = campaigns.filter(c => savedCampaigns.includes(c.id));
+  const watchlistItems = campaigns.filter(c => c && c.id && savedCampaigns.includes(c.id));
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -364,7 +374,7 @@ const ContributorDashboard = () => {
                       campaign={campaign} 
                       isSaved={savedCampaigns.includes(campaign.id)}
                       onToggleSave={toggleSaveCampaign}
-                      onViewDetails={(id: string) => console.log('View details', id)}
+                      onViewDetails={(id: string) => navigate(`/campaign/${id}`)}
                     />
                   ))}
                 </div>
@@ -417,7 +427,7 @@ const ContributorDashboard = () => {
                       campaign={campaign} 
                       isSaved={true}
                       onToggleSave={toggleSaveCampaign}
-                      onViewDetails={(id: string) => console.log('View details', id)}
+                      onViewDetails={(id: string) => navigate(`/campaign/${id}`)}
                     />
                   ))}
                 </div>
