@@ -16,46 +16,49 @@ import {
   Clock,
   ArrowUpRight,
   Search,
-  Bell
+  Bell,
+  User,
+  MoreVertical
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 // --- Components ---
 
 const SidebarItem = ({ icon: Icon, label, active = false, onClick }: any) => (
   <button 
     onClick={onClick}
-    className={`w-full flex items-center gap-3 px-6 py-4 transition-all duration-300 group ${
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-1 transition-all ${
       active 
-        ? 'bg-brand-600 text-white border-r-4 border-white shadow-lg' 
-        : 'text-brand-100 hover:bg-brand-700/50 hover:text-white'
+        ? 'bg-brand-50 text-brand-600 font-bold' 
+        : 'text-slate-400 hover:bg-slate-50 font-medium'
     }`}
   >
-    <Icon size={20} className={active ? 'text-white' : 'text-brand-300 group-hover:text-white'} />
-    <span className="text-sm font-bold tracking-wide uppercase">{label}</span>
+    <Icon size={18} />
+    <span className="text-sm">{label}</span>
   </button>
 );
 
 const MetricCard = ({ title, value, icon: Icon, subValue }: any) => (
-  <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-brand-900/5 transition-all duration-500 group">
-    <div className="flex items-start justify-between mb-4">
-      <div className="w-14 h-14 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-600 group-hover:bg-brand-600 group-hover:text-white transition-colors duration-500">
-        <Icon size={28} />
+  <div className="bg-white rounded-[32px] p-6 border border-slate-100 hover:border-brand-200 hover:shadow-xl hover:shadow-brand-500/5 transition-all group">
+    <div className="flex items-center gap-4 mb-4">
+      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-brand-500 group-hover:bg-brand-500 group-hover:text-white transition-colors duration-500">
+        <Icon size={22} />
       </div>
-      <span className="text-[0.65rem] font-bold text-brand-500 bg-brand-50 px-2 py-1 rounded-full uppercase tracking-widest">
-        Live Data
-      </span>
-    </div>
-    <h3 className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">{title}</h3>
-    <div className="flex items-baseline gap-2">
-      <span className="text-3xl font-bold text-brand-900 tracking-tight">{value}</span>
-      {subValue && <span className="text-sm font-medium text-slate-400">{subValue}</span>}
+      <div>
+        <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">{title}</h3>
+        <div className="flex items-baseline gap-1">
+          <span className="text-xl font-bold text-ink">{value}</span>
+          {subValue && <span className="text-[10px] font-bold text-slate-400">{subValue}</span>}
+        </div>
+      </div>
     </div>
   </div>
 );
 
 const CampaignOwnerDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [walletConnected, setWalletConnected] = useState(false);
 
@@ -79,256 +82,226 @@ const CampaignOwnerDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-      {/* Sidebar */}
-      <aside className="w-72 bg-brand-900 min-h-screen sticky top-0 flex flex-col z-20 shadow-2xl shadow-brand-900/20">
-        <div className="p-8 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-brand-900 font-bold text-2xl shadow-inner">P</div>
-            <span className="text-2xl font-bold text-white tracking-tighter uppercase italic">PureRaise</span>
-          </div>
+    <div className="min-h-screen bg-[#F8FAFC]">
+      {/* Sidebar - Consistent with Admin */}
+      <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-100 p-6 z-10 hidden lg:block">
+        <div className="flex items-center gap-2 mb-10">
+          <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold">P</div>
+          <span className="font-bold text-ink tracking-tight">PureRaise Owner</span>
         </div>
 
-        <nav className="flex-1">
-          <SidebarItem icon={LayoutDashboard} label="Dashboard Overview" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
+        <nav className="space-y-1">
+          <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'overview'} onClick={() => navigate('/campaign-owner/dashboard')} />
           <SidebarItem icon={Megaphone} label="My Campaigns" active={activeTab === 'campaigns'} onClick={() => setActiveTab('campaigns')} />
-          <SidebarItem icon={PlusCircle} label="Create New Campaign" active={activeTab === 'create'} onClick={() => setActiveTab('create')} />
-          <SidebarItem icon={Milestone} label="Milestone Management" active={activeTab === 'milestones'} onClick={() => setActiveTab('milestones')} />
-          <SidebarItem icon={History} label="Withdrawal History" active={activeTab === 'history'} onClick={() => setActiveTab('history')} />
-          <SidebarItem icon={Settings} label="Profile Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+          <SidebarItem icon={PlusCircle} label="Create Campaign" active={activeTab === 'create'} onClick={() => navigate('/campaign-owner/create')} />
+          <SidebarItem icon={Milestone} label="Milestones" active={activeTab === 'milestones'} onClick={() => setActiveTab('milestones')} />
+          <SidebarItem icon={History} label="Withdrawals" active={activeTab === 'history'} onClick={() => setActiveTab('history')} />
+          <SidebarItem icon={Settings} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
-
-        <div className="p-8">
-          <div className="bg-brand-800 rounded-2xl p-4 border border-brand-700/50">
-            <p className="text-[0.65rem] font-bold text-brand-400 uppercase tracking-widest mb-2">Smart Contract Status</p>
-            <div className="flex items-center gap-2 text-green-400">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-xs font-bold uppercase tracking-tight">Mainnet Optimized</span>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-12">
-        {/* Header */}
-        <header className="flex items-center justify-between mb-12">
-          <div>
-            <h1 className="text-4xl font-bold text-brand-900 tracking-tight">Welcome, {user?.name || 'Campaign Owner'}</h1>
-            <p className="text-slate-500 font-medium mt-1">Manage your decentralized funding and milestone progress.</p>
+      <main className="lg:pl-64">
+        {/* Top Header - Consistent with Admin */}
+        <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 z-20">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold text-ink">Dashboard Overview</h1>
+            <div className="h-6 w-px bg-slate-200" />
+            <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full border border-green-100">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Mainnet Active</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <button className="p-3 bg-white rounded-2xl border border-slate-100 shadow-sm text-slate-400 hover:text-brand-600 transition-colors">
-                <Bell size={22} />
-              </button>
-              <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-            </div>
-
+          <div className="flex items-center gap-4">
             <button 
               onClick={() => setWalletConnected(!walletConnected)}
-              className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-widest transition-all duration-300 ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                 walletConnected 
                   ? 'bg-green-50 text-green-600 border border-green-100' 
-                  : 'bg-brand-900 text-white hover:bg-brand-800 shadow-xl shadow-brand-900/20 active:scale-95'
+                  : 'bg-slate-900 text-white hover:bg-ink'
               }`}
             >
-              <Wallet size={18} />
-              {walletConnected ? '0x71C...4f8' : 'Connect MetaMask'}
+              <Wallet size={14} />
+              {walletConnected ? '0x71C...4f8' : 'Connect Wallet'}
             </button>
+            <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500">
+              <User size={20} />
+            </div>
           </div>
         </header>
 
-        {/* Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          <MetricCard title="Total Funds Raised" value="57.5" subValue="ETH" icon={TrendingUp} />
-          <MetricCard title="Active Campaigns" value="2" icon={Megaphone} />
-          <MetricCard title="Total Contributors" value="1,035" icon={UsersIcon} />
-          <MetricCard title="Next Milestone" value="12" subValue="Days" icon={Calendar} />
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-12">
-          {/* Active Campaigns List */}
-          <div className="xl:col-span-2 space-y-8">
-            <div className="bg-white rounded-[40px] p-10 shadow-sm border border-slate-100">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold text-brand-900">Active Campaigns</h2>
-                <button className="text-brand-600 font-bold text-sm uppercase tracking-widest hover:underline">View All</button>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left border-b border-slate-50">
-                      <th className="pb-4 text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest">Campaign Title</th>
-                      <th className="pb-4 text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest">Funding Progress</th>
-                      <th className="pb-4 text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest text-center">Status</th>
-                      <th className="pb-4 text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {campaigns.map((c) => (
-                      <tr key={c.id} className="group">
-                        <td className="py-6 pr-4">
-                          <div className="font-bold text-brand-900 group-hover:text-brand-600 transition-colors">{c.title}</div>
-                          <div className="text-xs text-slate-400 font-medium">{c.contributors} Backers</div>
-                        </td>
-                        <td className="py-6 pr-4 w-48">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold text-brand-900">{c.raised} ETH</span>
-                            <span className="text-[0.65rem] font-bold text-slate-400">{(c.raised / c.goal * 100).toFixed(0)}%</span>
-                          </div>
-                          <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-brand-600 rounded-full transition-all duration-1000" 
-                              style={{ width: `${(c.raised / c.goal * 100)}%` }} 
-                            />
-                          </div>
-                        </td>
-                        <td className="py-6 text-center">
-                          <span className={`px-3 py-1 rounded-full text-[0.6rem] font-bold uppercase tracking-widest ${
-                            c.status === 'Active' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-500'
-                          }`}>
-                            {c.status}
-                          </span>
-                        </td>
-                        <td className="py-6 text-right">
-                          <button className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-brand-600 transition-colors">
-                            <ArrowUpRight size={20} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Milestone Tracking */}
-            <div className="bg-white rounded-[40px] p-10 shadow-sm border border-slate-100">
-              <div className="flex items-center justify-between mb-10">
-                <div>
-                  <h2 className="text-2xl font-bold text-brand-900">Milestone Tracking</h2>
-                  <p className="text-sm text-slate-400 font-medium">Verify progress to unlock smart contract funds.</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Locked Funds</p>
-                    <p className="text-lg font-bold text-brand-900">25.0 ETH</p>
-                  </div>
-                  <div className="h-10 w-px bg-slate-100" />
-                  <div className="text-right">
-                    <p className="text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Available</p>
-                    <p className="text-lg font-bold text-brand-600">5.0 ETH</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-12 relative before:absolute before:left-6 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
-                {milestones.map((m) => (
-                  <div key={m.id} className="relative pl-16 group">
-                    <div className={`absolute left-0 top-1 w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${
-                      m.status === 'Verified' ? 'bg-green-100 text-green-600' : 
-                      m.status === 'In Progress' ? 'bg-brand-50 text-brand-600' : 
-                      'bg-slate-50 text-slate-300'
-                    }`}>
-                      {m.status === 'Verified' ? <CheckCircle2 size={24} /> : 
-                       m.status === 'In Progress' ? <Clock size={24} className="animate-spin-slow" /> : 
-                       <Milestone size={24} />}
-                    </div>
-
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-bold text-brand-900 mb-1">{m.title}</h4>
-                        <p className="text-xs text-slate-400 font-medium mb-4">{m.date} • Smart Contract Verified</p>
-                        <div className="flex gap-4">
-                          <div className="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-                            <span className="text-[0.6rem] font-bold text-slate-400 uppercase block tracking-tighter">Locked</span>
-                            <span className="text-sm font-bold text-brand-900">{m.locked} ETH</span>
-                          </div>
-                          <div className="bg-brand-50 px-3 py-1.5 rounded-lg border border-brand-100">
-                            <span className="text-[0.6rem] font-bold text-brand-400 uppercase block tracking-tighter">Release</span>
-                            <span className="text-sm font-bold text-brand-600">{m.available} ETH</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {m.status === 'In Progress' && (
-                        <button className="px-6 py-3 bg-brand-900 text-white font-bold text-[0.7rem] uppercase tracking-widest rounded-xl hover:bg-brand-800 transition-all shadow-lg shadow-brand-900/10">
-                          Submit Proof
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+        <div className="p-8">
+          {/* Metrics Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <MetricCard title="Total Raised" value="57.5" subValue="ETH" icon={TrendingUp} />
+            <MetricCard title="Campaigns" value="2" icon={Megaphone} />
+            <MetricCard title="Contributors" value="1,035" icon={UsersIcon} />
+            <MetricCard title="Next Milestone" value="12" subValue="Days" icon={Calendar} />
           </div>
 
-          {/* Right Sidebar Components */}
-          <div className="space-y-12">
-            {/* Wallet Info / Etherscan */}
-            <div className="bg-brand-900 rounded-[40px] p-10 text-white shadow-2xl shadow-brand-900/20">
-              <h3 className="text-xl font-bold mb-6 italic tracking-tight">On-Chain Verification</h3>
-              <div className="space-y-6">
-                <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-between">
-                  <div>
-                    <p className="text-[0.6rem] font-bold text-brand-400 uppercase tracking-widest">Active Contract</p>
-                    <p className="text-xs font-mono mt-1 text-brand-100">0x8920...248e</p>
-                  </div>
-                  <ExternalLink size={18} className="text-brand-400" />
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            {/* Active Campaigns List */}
+            <div className="xl:col-span-2 space-y-8">
+              <div className="bg-white rounded-[32px] p-8 border border-slate-100">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold text-ink">Active Campaigns</h2>
+                  <button className="text-xs font-bold text-brand-500 hover:underline">View All</button>
                 </div>
-                <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-between">
-                  <div>
-                    <p className="text-[0.6rem] font-bold text-brand-400 uppercase tracking-widest">Verified on</p>
-                    <p className="text-sm font-bold mt-1 text-white">Etherscan</p>
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-brand-500/20 flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-brand-400" />
-                  </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left border-b border-slate-50">
+                        <th className="pb-4 font-bold text-slate-400 uppercase tracking-wider text-[10px]">Campaign</th>
+                        <th className="pb-4 font-bold text-slate-400 uppercase tracking-wider text-[10px]">Progress</th>
+                        <th className="pb-4 font-bold text-slate-400 uppercase tracking-wider text-[10px] text-center">Status</th>
+                        <th className="pb-4 font-bold text-slate-400 uppercase tracking-wider text-[10px] text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {campaigns.map((c) => (
+                        <tr key={c.id} className="group">
+                          <td className="py-5">
+                            <div className="font-bold text-ink group-hover:text-brand-600 transition-colors">{c.title}</div>
+                            <div className="text-[10px] text-slate-400 font-medium">{c.contributors} contributors</div>
+                          </td>
+                          <td className="py-5 w-40">
+                            <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden mb-1">
+                              <div className="h-full bg-brand-500 rounded-full" style={{ width: `${(c.raised / c.goal * 100)}%` }} />
+                            </div>
+                            <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                              <span>{c.raised} ETH</span>
+                              <span>{Math.round(c.raised / c.goal * 100)}%</span>
+                            </div>
+                          </td>
+                          <td className="py-5 text-center">
+                            <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                              c.status === 'Active' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-500'
+                            }`}>
+                              {c.status}
+                            </span>
+                          </td>
+                          <td className="py-5 text-right">
+                            <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400">
+                              <MoreVertical size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            </div>
 
-            {/* Recent Contribution Feed */}
-            <div className="bg-white rounded-[40px] p-10 shadow-sm border border-slate-100">
-              <h3 className="text-xl font-bold text-brand-900 mb-8">Recent Backers</h3>
-              <div className="space-y-8">
-                {contributions.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-brand-50 group-hover:text-brand-600 transition-colors">
-                        <UserIcon size={18} />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-brand-900">{c.wallet}</p>
-                        <p className="text-[0.6rem] font-bold text-slate-400 uppercase tracking-tighter">{c.time}</p>
-                      </div>
-                    </div>
+              {/* Milestone Tracking */}
+              <div className="bg-white rounded-[32px] p-8 border border-slate-100">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-lg font-bold text-ink">Milestone Progress</h2>
+                  <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <p className="text-sm font-bold text-brand-600">+{c.amount} ETH</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase">Locked</p>
+                      <p className="text-sm font-bold text-ink">25.0 ETH</p>
+                    </div>
+                    <div className="text-right border-l border-slate-100 pl-4">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase">Available</p>
+                      <p className="text-sm font-bold text-brand-600">5.0 ETH</p>
                     </div>
                   </div>
-                ))}
+                </div>
+
+                <div className="space-y-8 relative before:absolute before:left-5 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
+                  {milestones.map((m) => (
+                    <div key={m.id} className="relative pl-12 group">
+                      <div className={`absolute left-0 top-0 w-10 h-10 rounded-xl flex items-center justify-center border-2 border-white shadow-sm ${
+                        m.status === 'Verified' ? 'bg-green-500 text-white' : 
+                        m.status === 'In Progress' ? 'bg-brand-500 text-white' : 
+                        'bg-slate-100 text-slate-300'
+                      }`}>
+                        {m.status === 'Verified' ? <CheckCircle2 size={18} /> : 
+                         m.status === 'In Progress' ? <Clock size={18} className="animate-spin-slow" /> : 
+                         <Milestone size={18} />}
+                      </div>
+
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="text-sm font-bold text-ink">{m.title}</h4>
+                          <p className="text-xs text-slate-400 font-medium mb-3">{m.date} • Verified On-Chain</p>
+                          <div className="flex gap-2">
+                            <span className="px-2 py-1 bg-slate-50 rounded-lg text-[9px] font-bold text-slate-400 border border-slate-100">
+                              LOCKED: {m.locked} ETH
+                            </span>
+                            <span className="px-2 py-1 bg-brand-50 rounded-lg text-[9px] font-bold text-brand-600 border border-brand-100">
+                              RELEASE: {m.available} ETH
+                            </span>
+                          </div>
+                        </div>
+                        {m.status === 'In Progress' && (
+                          <button className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-ink">
+                            Submit Proof
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <button className="w-full py-4 mt-10 rounded-2xl border border-slate-100 text-slate-400 font-bold text-[0.7rem] uppercase tracking-widest hover:bg-slate-50 transition-all">
-                View Transaction Feed
-              </button>
             </div>
 
-            {/* Quick Support */}
-            <div className="bg-brand-50 rounded-[40px] p-10 border border-brand-100">
-              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-brand-600 mb-6 shadow-sm">
-                <Bell size={24} />
+            {/* Right Feed Components */}
+            <div className="space-y-8">
+              {/* Recent Contributors */}
+              <div className="bg-white rounded-[32px] p-8 border border-slate-100">
+                <h3 className="text-sm font-bold text-ink mb-6">Recent Backers</h3>
+                <div className="space-y-6">
+                  {contributions.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+                          <User size={14} />
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-bold text-ink">{c.wallet}</p>
+                          <p className="text-[9px] font-medium text-slate-400">{c.time}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs font-bold text-brand-600">+{c.amount} ETH</p>
+                    </div>
+                  ))}
+                </div>
+                <button className="w-full py-3 mt-8 rounded-xl border border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider hover:bg-slate-50">
+                  Transaction Feed
+                </button>
               </div>
-              <h3 className="text-xl font-bold text-brand-900 mb-2">Backer Communication</h3>
-              <p className="text-sm text-brand-900/60 leading-relaxed mb-6">
-                Post direct updates to your backers to maintain transparency and trust.
-              </p>
-              <button className="w-full py-4 rounded-2xl bg-brand-600 text-white font-bold text-[0.7rem] uppercase tracking-widest hover:bg-brand-700 transition-all shadow-lg shadow-brand-600/20">
-                Post Update
-              </button>
+
+              {/* On-Chain Verification */}
+              <div className="bg-brand-900 rounded-[32px] p-8 text-white">
+                <h3 className="text-sm font-bold mb-6">On-Chain Security</h3>
+                <div className="space-y-4">
+                  <div className="p-3 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-between">
+                    <div>
+                      <p className="text-[8px] font-bold text-brand-400 uppercase">Contract Address</p>
+                      <p className="text-[10px] font-mono text-brand-100">0x8920...248e</p>
+                    </div>
+                    <ExternalLink size={14} className="text-brand-400" />
+                  </div>
+                  <div className="p-3 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-between">
+                    <p className="text-[10px] font-bold">Verified Etherscan</p>
+                    <div className="w-1.5 h-1.5 bg-green-400 rounded-full" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Support / Quick Update */}
+              <div className="bg-brand-50 rounded-[32px] p-8 border border-brand-100">
+                <h3 className="text-sm font-bold text-brand-900 mb-2">Backer Engagement</h3>
+                <p className="text-xs text-brand-900/60 leading-relaxed mb-6">
+                  Transparency builds trust. Post a project update to your backers.
+                </p>
+                <button className="w-full py-3 rounded-xl bg-brand-600 text-white text-[10px] font-bold uppercase tracking-wider hover:bg-brand-700 shadow-lg shadow-brand-600/20">
+                  Post Update
+                </button>
+              </div>
             </div>
           </div>
         </div>

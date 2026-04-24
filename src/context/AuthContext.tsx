@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   // Attempt to rehydrate session from HTTP-only cookie on mount
+  // This endpoint validates the access token from cookie and returns user data
   const refreshUser = useCallback(async () => {
     try {
       const { data } = await api.post<{ data: { user: AuthUser } }>('/auth/refresh');
