@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Megaphone, 
@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { getMyCampaignsApi, type CampaignResponse } from '../api/campaign';
+import { toast } from 'react-hot-toast';
 
 // --- Components ---
 
@@ -62,12 +64,27 @@ const CampaignOwnerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [walletConnected, setWalletConnected] = useState(false);
 
-  // Mock Data
-  const campaigns = [
-    { id: 1, title: 'Decentralized Solar Grid', raised: 12.5, goal: 20, status: 'Active', contributors: 145 },
-    { id: 2, title: 'AI Governance DAO', raised: 45.0, goal: 50, status: 'Active', contributors: 890 },
-    { id: 3, title: 'Clean Water Protocol', raised: 10, goal: 10, status: 'Completed', contributors: 320 },
-  ];
+  const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, []);
+
+  const fetchCampaigns = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getMyCampaignsApi();
+      setCampaigns(data);
+    } catch (error) {
+      console.error('Error fetching campaigns:', error);
+      toast.error('Failed to load your campaigns');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const activeCampaigns = campaigns.filter(c => c.status === 'active');
 
   const milestones = [
     { id: 1, title: 'MVP Development', status: 'Verified', date: 'Oct 12, 2024', locked: 0, available: 5 },
@@ -91,7 +108,7 @@ const CampaignOwnerDashboard = () => {
         </div>
 
         <nav className="space-y-1">
-          <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'overview'} onClick={() => navigate('/campaign-owner/dashboard')} />
+          <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
           <SidebarItem icon={Megaphone} label="My Campaigns" active={activeTab === 'campaigns'} onClick={() => setActiveTab('campaigns')} />
           <SidebarItem icon={PlusCircle} label="Create Campaign" active={activeTab === 'create'} onClick={() => navigate('/campaign-owner/create')} />
           <SidebarItem icon={Milestone} label="Milestones" active={activeTab === 'milestones'} onClick={() => setActiveTab('milestones')} />
@@ -134,65 +151,82 @@ const CampaignOwnerDashboard = () => {
         <div className="p-8">
           {/* Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <MetricCard title="Total Raised" value="57.5" subValue="ETH" icon={TrendingUp} />
-            <MetricCard title="Campaigns" value="2" icon={Megaphone} />
-            <MetricCard title="Contributors" value="1,035" icon={UsersIcon} />
-            <MetricCard title="Next Milestone" value="12" subValue="Days" icon={Calendar} />
+            <MetricCard title="Total Raised" value="0.00" subValue="ETH" icon={TrendingUp} />
+            <MetricCard title="Campaigns" value={campaigns.length} icon={Megaphone} />
+            <MetricCard title="Contributors" value="0" icon={UsersIcon} />
+            <MetricCard title="Next Milestone" value="--" subValue="Days" icon={Calendar} />
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            {/* Active Campaigns List */}
-            <div className="xl:col-span-2 space-y-8">
-              <div className="bg-white rounded-[32px] p-8 border border-slate-100">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-bold text-ink">Active Campaigns</h2>
-                  <button className="text-xs font-bold text-brand-500 hover:underline">View All</button>
-                </div>
+          {activeTab === 'overview' &&
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+              {/* Active Campaigns List */}
+              <div className="xl:col-span-2 space-y-8">
+                <div className="bg-white rounded-[32px] p-8 border border-slate-100">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-bold text-ink">Active Campaigns</h2>
+                    <button 
+                      onClick={() => setActiveTab('campaigns')}
+                      className="text-xs font-bold text-brand-500 hover:underline"
+                    >
+                      View All
+                    </button>
+                  </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left border-b border-slate-50">
-                        <th className="pb-4 font-bold text-slate-400 uppercase tracking-wider text-[10px]">Campaign</th>
-                        <th className="pb-4 font-bold text-slate-400 uppercase tracking-wider text-[10px]">Progress</th>
-                        <th className="pb-4 font-bold text-slate-400 uppercase tracking-wider text-[10px] text-center">Status</th>
-                        <th className="pb-4 font-bold text-slate-400 uppercase tracking-wider text-[10px] text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                      {campaigns.map((c) => (
-                        <tr key={c.id} className="group">
-                          <td className="py-5">
-                            <div className="font-bold text-ink group-hover:text-brand-600 transition-colors">{c.title}</div>
-                            <div className="text-[10px] text-slate-400 font-medium">{c.contributors} contributors</div>
-                          </td>
-                          <td className="py-5 w-40">
-                            <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden mb-1">
-                              <div className="h-full bg-brand-500 rounded-full" style={{ width: `${(c.raised / c.goal * 100)}%` }} />
-                            </div>
-                            <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                              <span>{c.raised} ETH</span>
-                              <span>{Math.round(c.raised / c.goal * 100)}%</span>
-                            </div>
-                          </td>
-                          <td className="py-5 text-center">
-                            <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                              c.status === 'Active' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-500'
-                            }`}>
-                              {c.status}
-                            </span>
-                          </td>
-                          <td className="py-5 text-right">
-                            <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400">
-                              <MoreVertical size={16} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <div className="overflow-x-auto">
+                    {isLoading ? (
+                      <div className="flex flex-col items-center py-12">
+                        <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin mb-4" />
+                        <p className="text-slate-400 text-sm font-medium">Loading campaigns...</p>
+                      </div>
+                    ) : activeCampaigns.length === 0 ? (
+                      <div className="text-center py-12 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                        <Megaphone className="mx-auto text-slate-300 mb-3" size={32} />
+                        <p className="text-slate-500 font-bold">No active campaigns</p>
+                        <p className="text-slate-400 text-xs mt-1">Start a new campaign to reach your goal.</p>
+                      </div>
+                    ) : (
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left border-b border-slate-50">
+                            <th className="pb-4 font-bold text-slate-400 uppercase tracking-wider text-[10px]">Campaign</th>
+                            <th className="pb-4 font-bold text-slate-400 uppercase tracking-wider text-[10px]">Progress</th>
+                            <th className="pb-4 font-bold text-slate-400 uppercase tracking-wider text-[10px] text-center">Status</th>
+                            <th className="pb-4 font-bold text-slate-400 uppercase tracking-wider text-[10px] text-right">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {activeCampaigns.map((c) => (
+                            <tr key={c.id} className="group">
+                              <td className="py-5">
+                                <div className="font-bold text-ink group-hover:text-brand-600 transition-colors">{c.title}</div>
+                                <div className="text-[10px] text-slate-400 font-medium">{c.category}</div>
+                              </td>
+                              <td className="py-5 w-40">
+                                <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden mb-1">
+                                  <div className="h-full bg-brand-500 rounded-full" style={{ width: `0%` }} />
+                                </div>
+                                <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                                  <span>0 ETH</span>
+                                  <span>0%</span>
+                                </div>
+                              </td>
+                              <td className="py-5 text-center">
+                                <span className="px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-green-50 text-green-600">
+                                  {c.status}
+                                </span>
+                              </td>
+                              <td className="py-5 text-right">
+                                <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400">
+                                  <MoreVertical size={16} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
                 </div>
-              </div>
 
               {/* Milestone Tracking */}
               <div className="bg-white rounded-[32px] p-8 border border-slate-100">
@@ -301,9 +335,111 @@ const CampaignOwnerDashboard = () => {
                 <button className="w-full py-3 rounded-xl bg-brand-600 text-white text-[10px] font-bold uppercase tracking-wider hover:bg-brand-700 shadow-lg shadow-brand-600/20">
                   Post Update
                 </button>
+                </div>
               </div>
             </div>
-          </div>
+          }
+
+          {activeTab === 'campaigns' &&
+            <div className="space-y-8">
+              <div className="bg-white rounded-[32px] p-8 border border-slate-100">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h2 className="text-xl font-bold text-ink">My Campaigns</h2>
+                    <p className="text-slate-400 text-sm font-medium mt-1">Manage and track all your fundraising efforts</p>
+                  </div>
+                  <button 
+                    onClick={() => navigate('/campaign-owner/create')}
+                    className="flex items-center gap-2 px-6 py-3 bg-brand-500 text-white rounded-2xl font-bold text-sm hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/20"
+                  >
+                    <PlusCircle size={18} />
+                    Create New
+                  </button>
+                </div>
+
+                {isLoading ? (
+                  <div className="flex flex-col items-center py-20">
+                    <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin mb-4" />
+                    <p className="text-slate-500 font-medium">Fetching your campaigns...</p>
+                  </div>
+                ) : campaigns.length === 0 ? (
+                  <div className="text-center py-20 bg-slate-50/50 rounded-[32px] border border-dashed border-slate-200">
+                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                      <Megaphone className="text-slate-300" size={40} />
+                    </div>
+                    <h3 className="text-xl font-bold text-ink mb-2">No Campaigns Yet</h3>
+                    <p className="text-slate-400 max-w-sm mx-auto mb-8">
+                      You haven't created any campaigns yet. Start your first fundraising journey today!
+                    </p>
+                    <button 
+                      onClick={() => navigate('/campaign-owner/create')}
+                      className="px-8 py-4 bg-ink text-white rounded-2xl font-bold text-sm hover:bg-slate-800 transition-all"
+                    >
+                      Create Your First Campaign
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {campaigns.map((c) => (
+                      <div key={c.id} className="group bg-white rounded-[32px] border border-slate-100 overflow-hidden hover:border-brand-200 hover:shadow-2xl hover:shadow-brand-500/5 transition-all duration-500">
+                        <div className="aspect-video w-full relative overflow-hidden bg-slate-100">
+                          {c.coverImage ? (
+                            <img 
+                              src={c.coverImage} 
+                              alt={c.title} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Megaphone size={40} className="text-slate-200" />
+                            </div>
+                          )}
+                          <div className="absolute top-4 left-4">
+                            <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border ${
+                              c.status === 'active' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                              c.status === 'pending_approval' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                              c.status === 'rejected' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                              'bg-slate-500/10 text-slate-500 border-slate-500/20'
+                            }`}>
+                              {c.status.replace('_', ' ')}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="p-6">
+                          <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest mb-2">{c.category}</p>
+                          <h3 className="font-bold text-ink mb-2 line-clamp-1 group-hover:text-brand-600 transition-colors">{c.title}</h3>
+                          <p className="text-xs text-slate-400 line-clamp-2 mb-6 min-h-[32px]">{c.summary}</p>
+                          
+                          <div className="space-y-4">
+                            <div>
+                              <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5">
+                                <span>Progress</span>
+                                <span>0%</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
+                                <div className="h-full bg-brand-500 rounded-full" style={{ width: '0%' }} />
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                              <div>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Goal</p>
+                                <p className="text-sm font-bold text-ink">{c.targetFunding} ETH</p>
+                              </div>
+                              <button className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-brand-50 hover:text-brand-500 transition-colors">
+                                <ArrowUpRight size={18} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                </div>
+              </div>
+            }
         </div>
       </main>
     </div>

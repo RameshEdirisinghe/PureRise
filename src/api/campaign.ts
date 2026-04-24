@@ -24,9 +24,16 @@ export interface CreateCampaignPayload {
 export interface CampaignResponse {
   id: string;
   title: string;
-  status: 'draft' | 'pending_approval' | 'active' | 'paused' | 'completed' | 'rejected';
+  summary: string;
   category: string;
+  coverImage: string;
+  targetFunding: number;
+  status: 'draft' | 'pending_approval' | 'active' | 'paused' | 'completed' | 'rejected';
   createdAt: string;
+  reviewNotes?: string;
+  goalDescription: string;
+  endDate: string;
+  milestones: any[];
 }
 
 /**
