@@ -241,7 +241,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       if (!eth) return;
 
       try {
-        const accounts: string[] = await eth.request({ method: 'eth_accounts' });
+        const accounts: string[] = (await eth.request({ method: 'eth_accounts' })) as string[];
         if (accounts && accounts.length > 0) {
           await setupProvider(accounts[0].toLowerCase());
         } else {
