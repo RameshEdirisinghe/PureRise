@@ -34,6 +34,49 @@ interface OnboardingData {
   agreed: boolean;
 }
 
+const COUNTRIES = [
+  { code: 'LK', name: 'Sri Lanka' },
+  { code: 'US', name: 'United States' },
+  { code: 'UK', name: 'United Kingdom' },
+  { code: 'IN', name: 'India' },
+  { code: 'AU', name: 'Australia' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'FR', name: 'France' },
+  { code: 'JP', name: 'Japan' },
+  { code: 'SG', name: 'Singapore' },
+  { code: 'AE', name: 'United Arab Emirates' },
+  { code: 'QA', name: 'Qatar' },
+  { code: 'CH', name: 'Switzerland' },
+  { code: 'NL', name: 'Netherlands' },
+  { code: 'SE', name: 'Sweden' },
+  { code: 'NO', name: 'Norway' },
+  { code: 'NZ', name: 'New Zealand' },
+  { code: 'KR', name: 'South Korea' },
+  { code: 'CN', name: 'China' },
+  { code: 'IT', name: 'Italy' },
+  { code: 'ES', name: 'Spain' },
+  { code: 'BR', name: 'Brazil' },
+  { code: 'RU', name: 'Russia' },
+  { code: 'ZA', name: 'South Africa' },
+  { code: 'MY', name: 'Malaysia' },
+  { code: 'TH', name: 'Thailand' },
+  { code: 'ID', name: 'Indonesia' },
+  { code: 'VN', name: 'Vietnam' },
+  { code: 'SA', name: 'Saudi Arabia' },
+  { code: 'IL', name: 'Israel' },
+  { code: 'MX', name: 'Mexico' },
+  { code: 'AR', name: 'Argentina' },
+  { code: 'CL', name: 'Chile' },
+  { code: 'CO', name: 'Colombia' },
+  { code: 'EG', name: 'Egypt' },
+  { code: 'NG', name: 'Nigeria' },
+  { code: 'KE', name: 'Kenya' },
+  { code: 'PK', name: 'Pakistan' },
+  { code: 'BD', name: 'Bangladesh' },
+  { code: 'PH', name: 'Philippines' },
+].sort((a, b) => a.name.localeCompare(b.name));
+
 // --- Components ---
 
 const ProgressIndicator = ({ currentStep }: { currentStep: OnboardingStep }) => {
@@ -388,11 +431,11 @@ const CampaignOwnerOnboarding = () => {
               onChange={(e) => updateData({ country: e.target.value })}
             >
               <option value="">Select country</option>
-              <option value="US">United States</option>
-              <option value="UK">United Kingdom</option>
-              <option value="DE">Germany</option>
-              <option value="JP">Japan</option>
-              {/* Add more as needed */}
+              {COUNTRIES.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
             </select>
           </div>
         </div>

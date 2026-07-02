@@ -92,17 +92,8 @@ const CampaignOwnerDashboard = () => {
 
   const activeCampaigns = campaigns.filter(c => c.status === 'active');
 
-  const milestones = [
-    { id: 1, title: 'MVP Development', status: 'Verified', date: 'Oct 12, 2024', locked: 0, available: 5 },
-    { id: 2, title: 'Beta Testing', status: 'In Progress', date: 'Nov 20, 2024', locked: 10, available: 0 },
-    { id: 3, title: 'Mainnet Launch', status: 'Locked', date: 'Dec 15, 2024', locked: 15, available: 0 },
-  ];
-
-  const contributions = [
-    { id: 1, wallet: '0x71C...4f8', amount: 0.5, time: '2 mins ago' },
-    { id: 2, wallet: '0x3a2...9d1', amount: 2.1, time: '15 mins ago' },
-    { id: 3, wallet: '0x9e5...b2c', amount: 0.15, time: '1 hour ago' },
-  ];
+  const milestones = [];
+  const contributions = [];
 
   const handleProfileUpdate = async () => {
     try {
@@ -277,17 +268,23 @@ const CampaignOwnerDashboard = () => {
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <p className="text-[9px] font-bold text-slate-400 uppercase">Locked</p>
-                      <p className="text-sm font-bold text-ink">25.0 ETH</p>
+                      <p className="text-sm font-bold text-ink">0.0 ETH</p>
                     </div>
                     <div className="text-right border-l border-slate-100 pl-4">
                       <p className="text-[9px] font-bold text-slate-400 uppercase">Available</p>
-                      <p className="text-sm font-bold text-brand-600">5.0 ETH</p>
+                      <p className="text-sm font-bold text-brand-600">0.0 ETH</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-8 relative before:absolute before:left-5 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
-                  {milestones.map((m) => (
+                  {milestones.length === 0 ? (
+                    <div className="text-center py-10 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 ml-5">
+                      <Milestone className="mx-auto text-slate-300 mb-2" size={24} />
+                      <p className="text-slate-400 text-xs font-bold">No milestones tracking yet</p>
+                    </div>
+                  ) : (
+                    milestones.map((m: any) => (
                     <div key={m.id} className="relative pl-12 group">
                       <div className={`absolute left-0 top-0 w-10 h-10 rounded-xl flex items-center justify-center border-2 border-white shadow-sm ${
                         m.status === 'Verified' ? 'bg-green-500 text-white' : 
@@ -319,7 +316,8 @@ const CampaignOwnerDashboard = () => {
                         )}
                       </div>
                     </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -330,26 +328,33 @@ const CampaignOwnerDashboard = () => {
               <div className="bg-white rounded-[32px] p-8 border border-slate-100">
                 <h3 className="text-sm font-bold text-ink mb-6">Recent Backers</h3>
                 <div className="space-y-6">
-                  {contributions.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-brand-50 border border-slate-200 flex items-center justify-center text-brand-500 overflow-hidden shadow-sm">
-                          {user?.profileImage ? (
-                            <img src={user.profileImage} className="w-full h-full object-cover" alt="Profile" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-brand-100 text-brand-600 font-bold">
-                              {user?.name?.charAt(0)}
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-bold text-ink">{c.wallet}</p>
-                          <p className="text-[9px] font-medium text-slate-400">{c.time}</p>
-                        </div>
-                      </div>
-                      <p className="text-xs font-bold text-brand-600">+{c.amount} ETH</p>
+                  {contributions.length === 0 ? (
+                    <div className="text-center py-8">
+                      <UsersIcon className="mx-auto text-slate-200 mb-2" size={24} />
+                      <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">No backers yet</p>
                     </div>
-                  ))}
+                  ) : (
+                    contributions.map((c: any) => (
+                      <div key={c.id} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-brand-50 border border-slate-200 flex items-center justify-center text-brand-500 overflow-hidden shadow-sm">
+                            {user?.profileImage ? (
+                              <img src={user.profileImage} className="w-full h-full object-cover" alt="Profile" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-brand-100 text-brand-600 font-bold">
+                                {user?.name?.charAt(0)}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold text-ink">{c.wallet}</p>
+                            <p className="text-[9px] font-medium text-slate-400">{c.time}</p>
+                          </div>
+                        </div>
+                        <p className="text-xs font-bold text-brand-600">+{c.amount} ETH</p>
+                      </div>
+                    ))
+                  )}
                 </div>
                 <button className="w-full py-3 mt-8 rounded-xl border border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider hover:bg-slate-50">
                   Transaction Feed
