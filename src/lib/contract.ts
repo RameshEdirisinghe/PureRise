@@ -1,114 +1,39 @@
 import { ethers } from 'ethers';
+import PureRaiseABI from '../contracts/PureRaiseABI.json';
 
-// ── Sepolia Testnet Configuration ─────────────────────────────────────────────
-export const SEPOLIA_CHAIN_ID = 11155111;
-export const SEPOLIA_CHAIN_ID_HEX = '0xaa36a7'; // hex for wallet_switchEthereumChain
+// ── Sepolia Testnet Configuration ──────────────────────────────────────────────
+export const SEPOLIA_CHAIN_ID     = 11155111;
+export const SEPOLIA_CHAIN_ID_HEX = '0xaa36a7';
+
+export const NETWORK = {
+  chainId:     SEPOLIA_CHAIN_ID,
+  chainIdHex:  SEPOLIA_CHAIN_ID_HEX,
+  name:        'Sepolia Testnet',
+  rpcUrl:      'https://rpc.sepolia.org',
+  explorerUrl: 'https://sepolia.etherscan.io',
+  currency: {
+    name:     'Sepolia ETH',
+    symbol:   'ETH',
+    decimals: 18,
+  },
+} as const;
 
 /**
  * Contract address on Sepolia Testnet.
- * Set VITE_CONTRACT_ADDRESS in your .env file.
+ * Sourced exclusively from VITE_CONTRACT_ADDRESS in your .env file.
  */
 export const CONTRACT_ADDRESS: string =
   import.meta.env.VITE_CONTRACT_ADDRESS ?? '';
 
-// ── Minimal ABI ───────────────────────────────────────────────────────────────
-// Replace / extend with your actual contract ABI.
-// These are the expected function signatures for PureRaise campaigns.
-export const CONTRACT_ABI: ethers.InterfaceAbi = [
-  // Create a new campaign
-  {
-    name: 'createCampaign',
-    type: 'function',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'title',       type: 'string'  },
-      { name: 'description', type: 'string'  },
-      { name: 'goal',        type: 'uint256' }, // in wei
-      { name: 'deadline',    type: 'uint256' }, // unix timestamp
-    ],
-    outputs: [{ name: 'campaignId', type: 'uint256' }],
-  },
-
-  // Donate ETH to a campaign
-  {
-    name: 'donate',
-    type: 'function',
-    stateMutability: 'payable',
-    inputs: [{ name: 'campaignId', type: 'uint256' }],
-    outputs: [],
-  },
-
-  // Campaign owner withdraws raised funds
-  {
-    name: 'withdraw',
-    type: 'function',
-    stateMutability: 'nonpayable',
-    inputs: [{ name: 'campaignId', type: 'uint256' }],
-    outputs: [],
-  },
-
-  // Read campaign details
-  {
-    name: 'getCampaign',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [{ name: 'campaignId', type: 'uint256' }],
-    outputs: [
-      { name: 'owner',       type: 'address' },
-      { name: 'title',       type: 'string'  },
-      { name: 'description', type: 'string'  },
-      { name: 'goal',        type: 'uint256' },
-      { name: 'raised',      type: 'uint256' },
-      { name: 'deadline',    type: 'uint256' },
-      { name: 'withdrawn',   type: 'bool'    },
-    ],
-  },
-
-  // Read total number of campaigns
-  {
-    name: 'campaignCount',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [{ name: '', type: 'uint256' }],
-  },
-
-  // Events
-  {
-    name: 'CampaignCreated',
-    type: 'event',
-    inputs: [
-      { name: 'campaignId', type: 'uint256', indexed: true },
-      { name: 'owner',      type: 'address', indexed: true },
-      { name: 'goal',       type: 'uint256', indexed: false },
-    ],
-  },
-  {
-    name: 'DonationReceived',
-    type: 'event',
-    inputs: [
-      { name: 'campaignId', type: 'uint256', indexed: true },
-      { name: 'donor',      type: 'address', indexed: true },
-      { name: 'amount',     type: 'uint256', indexed: false },
-    ],
-  },
-  {
-    name: 'FundsWithdrawn',
-    type: 'event',
-    inputs: [
-      { name: 'campaignId', type: 'uint256', indexed: true },
-      { name: 'amount',     type: 'uint256', indexed: false },
-    ],
-  },
-];
+/**
+ * Full ABI imported from src/contracts/PureRaiseABI.json.
+ * Never inline the ABI in component or service files — import from here.
+ */
+export const CONTRACT_ABI: ethers.InterfaceAbi = PureRaiseABI as ethers.InterfaceAbi;
 
 // ── Contract Factory ──────────────────────────────────────────────────────────
-/**
- * Returns an ethers.js v6 Contract instance connected to the given signer.
- * Every method call will automatically require MetaMask confirmation.
- *
- * @param signer - ethers.JsonRpcSigner obtained from WalletContext
- */
+
+/** Returns a write-capable contract instance (requires a signer). */
 export const getContract = (signer: ethers.JsonRpcSigner): ethers.Contract => {
   if (!CONTRACT_ADDRESS) {
     throw new Error(
@@ -118,17 +43,19 @@ export const getContract = (signer: ethers.JsonRpcSigner): ethers.Contract => {
   return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 };
 
-/**
- * Returns a read-only contract instance (no signer needed — useful for public data).
- */
+/** Returns a read-only contract instance (no MetaMask / gas needed). */
 export const getReadOnlyContract = (): ethers.Contract => {
   if (!CONTRACT_ADDRESS) {
     throw new Error(
       'Contract address not configured. Set VITE_CONTRACT_ADDRESS in your .env file.'
     );
   }
-  const provider = new ethers.JsonRpcProvider(
-    `https://sepolia.infura.io/v3/${import.meta.env.VITE_INFURA_API_KEY ?? ''}`
-  );
+  // Use BrowserProvider for read-only when MetaMask is available,
+  // otherwise fall back to a public JSON-RPC endpoint.
+  if (typeof window !== 'undefined' && window.ethereum) {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+  }
+  const provider = new ethers.JsonRpcProvider(NETWORK.rpcUrl);
   return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 };
