@@ -424,61 +424,79 @@ const CampaignOwnerDashboard = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {campaigns.map((c) => (
-                      <div key={c.id} className="group bg-white rounded-[32px] border border-slate-100 overflow-hidden hover:border-brand-200 hover:shadow-2xl hover:shadow-brand-500/5 transition-all duration-500">
-                        <div className="aspect-video w-full relative overflow-hidden bg-slate-100">
-                          {c.coverImage ? (
-                            <img 
-                              src={c.coverImage} 
-                              alt={c.title} 
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Megaphone size={40} className="text-slate-200" />
+                    {campaigns.map((c) => {
+                      const campaignId = c._id || c.id;
+                      return (
+                        <div
+                          key={c.id}
+                          onClick={() => navigate(`/campaign-owner/campaign/${campaignId}`)}
+                          className="group cursor-pointer bg-white rounded-[32px] border border-slate-100 overflow-hidden hover:border-brand-200 hover:shadow-2xl hover:shadow-brand-500/5 transition-all duration-500"
+                        >
+                          {/* Cover image with overlay */}
+                          <div className="aspect-video w-full relative overflow-hidden bg-slate-100">
+                            {c.coverImage ? (
+                              <img
+                                src={c.coverImage}
+                                alt={c.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Megaphone size={40} className="text-slate-200" />
+                              </div>
+                            )}
+
+                            {/* Status badge */}
+                            <div className="absolute top-4 left-4">
+                              <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border ${
+                                c.status === 'active'           ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                c.status === 'pending_approval' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                                c.status === 'rejected'         ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                'bg-slate-500/10 text-slate-500 border-slate-500/20'
+                              }`}>
+                                {c.status.replace('_', ' ')}
+                              </span>
                             </div>
-                          )}
-                          <div className="absolute top-4 left-4">
-                            <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border ${
-                              c.status === 'active' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                              c.status === 'pending_approval' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-                              c.status === 'rejected' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                              'bg-slate-500/10 text-slate-500 border-slate-500/20'
-                            }`}>
-                              {c.status.replace('_', ' ')}
-                            </span>
+
+                            {/* Hover overlay */}
+                            <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                              <div className="flex items-center gap-2 bg-white text-slate-900 px-5 py-2.5 rounded-2xl font-bold text-sm shadow-xl transform translate-y-3 group-hover:translate-y-0 transition-transform duration-300">
+                                <ArrowUpRight size={16} />
+                                View Details
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        
-                        <div className="p-6">
-                          <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest mb-2">{c.category}</p>
-                          <h3 className="font-bold text-ink mb-2 line-clamp-1 group-hover:text-brand-600 transition-colors">{c.title}</h3>
-                          <p className="text-xs text-slate-400 line-clamp-2 mb-6 min-h-[32px]">{c.summary}</p>
-                          
-                          <div className="space-y-4">
-                            <div>
-                              <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5">
-                                <span>Progress</span>
-                                <span>0%</span>
-                              </div>
-                              <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
-                                <div className="h-full bg-brand-500 rounded-full" style={{ width: '0%' }} />
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+
+                          <div className="p-6">
+                            <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest mb-2">{c.category}</p>
+                            <h3 className="font-bold text-ink mb-2 line-clamp-1 group-hover:text-brand-600 transition-colors">{c.title}</h3>
+                            <p className="text-xs text-slate-400 line-clamp-2 mb-6 min-h-[32px]">{c.summary}</p>
+
+                            <div className="space-y-4">
                               <div>
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Goal</p>
-                                <p className="text-sm font-bold text-ink">{c.targetFunding} ETH</p>
+                                <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5">
+                                  <span>Progress</span>
+                                  <span>0%</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
+                                  <div className="h-full bg-brand-500 rounded-full" style={{ width: '0%' }} />
+                                </div>
                               </div>
-                              <button className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-brand-50 hover:text-brand-500 transition-colors">
-                                <ArrowUpRight size={18} />
-                              </button>
+
+                              <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                                <div>
+                                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Goal</p>
+                                  <p className="text-sm font-bold text-ink">{c.targetFunding} ETH</p>
+                                </div>
+                                <div className="p-2.5 bg-brand-50 text-brand-500 rounded-xl group-hover:bg-brand-500 group-hover:text-white transition-colors">
+                                  <ArrowUpRight size={18} />
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

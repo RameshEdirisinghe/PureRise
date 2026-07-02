@@ -11,6 +11,7 @@ import CampaignOwnerOnboarding from './pages/CampaignOwnerOnboarding';
 import AdminDashboard from './pages/AdminDashboard';
 import CampaignOwnerDashboard from './pages/CampaignOwnerDashboard';
 import CreateCampaign from './pages/CreateCampaign';
+import CampaignOwnerDetailedView from './pages/CampaignOwnerDetailedView';
 import CampaignDetails from './pages/CampaignDetails';
 
 // Simple unauthorized page
@@ -52,6 +53,7 @@ function App() {
             <Route element={<ProtectedRoute allowedRoles={['projectOwner']} />}>
               <Route path="/campaign-owner/dashboard" element={<CampaignOwnerDashboard />} />
               <Route path="/campaign-owner/create" element={<CreateCampaign />} />
+              <Route path="/campaign-owner/campaign/:id" element={<CampaignOwnerDetailedView />} />
             </Route>
 
             {/* Catch-all */}

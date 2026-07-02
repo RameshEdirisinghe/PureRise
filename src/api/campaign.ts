@@ -23,6 +23,7 @@ export interface CreateCampaignPayload {
 
 export interface CampaignResponse {
   id: string;
+  _id?: string;           // raw Mongo _id (returned by backend alongside 'id')
   title: string;
   summary: string;
   category: string;
@@ -34,6 +35,7 @@ export interface CampaignResponse {
   goalDescription: string;
   endDate: string;
   milestones: any[];
+  media?: string[];
   owner?: {
     name: string;
     email: string;

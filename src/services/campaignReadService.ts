@@ -89,3 +89,74 @@ export const fetchAvailableFunds = async (
   const raw: bigint = await contract.getAvailableFunds(id);
   return weiToEth(raw);
 };
+
+// ── Event History ─────────────────────────────────────────────────────────────
+
+export interface ContributionEvent {
+  contributor: string;
+  amount: string;
+  txHash: string;
+  blockNumber: number;
+}
+
+export interface WithdrawalEvent {
+  owner: string;
+  amount: string;
+  txHash: string;
+  blockNumber: number;
+}
+
+/**
+ * Fetches all ContributionMade events for a specific campaign.
+ */
+export const fetchCampaignContributions = async (
+  campaignId: bigint | string | number
+): Promise<ContributionEvent[]> => {
+  try {
+    const contract = await getContractInstance(false);
+    const id = BigInt(campaignId);
+    const filter = contract.filters.ContributionMade(id);
+    const events = await contract.queryFilter(filter, 0, 'latest'); // from block 0
+    
+    return events.map((event: any) => {
+      const args = event.args || [];
+      return {
+        contributor: args[1] as string,
+        amount: weiToEth(args[2] as bigint),
+        txHash: event.transactionHash,
+        blockNumber: event.blockNumber,
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching contributions:', error);
+    return [];
+  }
+};
+
+/**
+ * Fetches all FundsWithdrawn events for a specific campaign.
+ */
+export const fetchCampaignWithdrawals = async (
+  campaignId: bigint | string | number
+): Promise<WithdrawalEvent[]> => {
+  try {
+    const contract = await getContractInstance(false);
+    const id = BigInt(campaignId);
+    const filter = contract.filters.FundsWithdrawn(id);
+    const events = await contract.queryFilter(filter, 0, 'latest');
+    
+    return events.map((event: any) => {
+      const args = event.args || [];
+      return {
+        owner: args[1] as string,
+        amount: weiToEth(args[2] as bigint),
+        txHash: event.transactionHash,
+        blockNumber: event.blockNumber,
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching withdrawals:', error);
+    return [];
+  }
+};
+
