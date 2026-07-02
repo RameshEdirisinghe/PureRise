@@ -127,7 +127,15 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     setStatus('connecting');
 
     try {
-      // Request account access — triggers MetaMask popup
+      // ── Step 1: Request permissions — this ALWAYS shows the account picker popup.
+      // Unlike eth_requestAccounts, wallet_requestPermissions never silently
+      // reuses an existing session, so switching accounts works properly.
+      await eth.request({
+        method: 'wallet_requestPermissions',
+        params: [{ eth_accounts: {} }],
+      });
+
+      // ── Step 2: Now get the newly selected accounts
       const accounts: string[] = await eth.request({
         method: 'eth_requestAccounts',
       });
@@ -157,7 +165,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       const error = err as { code?: number; message?: string };
 
       if (error?.code === 4001) {
-        // User rejected the connection request
+        // User closed the popup / rejected the request
         toast.error('Connection rejected. Please approve MetaMask to continue.');
       } else if (error?.code === -32002) {
         // MetaMask is already showing a pending request
