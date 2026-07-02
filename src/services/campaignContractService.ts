@@ -151,15 +151,13 @@ export const claimDonorRefund = async (
 };
 
 /**
- * Opens a campaign on-chain via `openCampaign(uint256, address)`.
- * Admin-only function — the contract will revert if the caller isn't the admin.
+ * Opens a campaign on-chain via `openCampaign(uint256)`.
+ * Can be called by anyone (typically the campaign owner).
  *
  * @param campaignId    - uint256 campaign ID
- * @param ownerAddress  - Ethereum address of the campaign owner
  */
 export const openCampaignOnChain = async (
-  campaignId:   bigint | string | number,
-  ownerAddress: string
+  campaignId:   bigint | string | number
 ): Promise<TxResult> => {
   try {
     await ensureSepoliaNetwork();
@@ -167,7 +165,7 @@ export const openCampaignOnChain = async (
     const contract = await getContractInstance(true);
     const id       = BigInt(campaignId);
 
-    const tx: ethers.ContractTransactionResponse = await contract.openCampaign(id, ownerAddress);
+    const tx: ethers.ContractTransactionResponse = await contract.openCampaign(id);
 
     const receipt = await tx.wait();
 

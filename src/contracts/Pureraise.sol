@@ -45,15 +45,14 @@ contract PureRaise {
         admin = msg.sender;
     }
 
-    function openCampaign(uint256 _campaignId, address _owner) external onlyAdmin {
-        require(!isActive[_campaignId],    "Campaign already open");
+    function openCampaign(uint256 _campaignId) external {
+        require(!isActive[_campaignId],    "Campaign already active");
         require(!isCancelled[_campaignId], "Campaign is cancelled");
-        require(_owner != address(0),      "Invalid owner address");
 
         isActive[_campaignId]      = true;
-        campaignOwner[_campaignId] = _owner;
+        campaignOwner[_campaignId] = msg.sender;
 
-        emit CampaignOpened(_campaignId, _owner);
+        emit CampaignOpened(_campaignId, msg.sender);
     }
 
     function contribute(uint256 _campaignId) external payable {
@@ -68,25 +67,7 @@ contract PureRaise {
         emit ContributionMade(_campaignId, msg.sender, msg.value);
     }
 
-    function releaseFunds(
-        uint256 _campaignId,
-        uint256 _milestoneIndex,
-        address payable _ownerWallet,
-        uint256 _amount
-    ) external onlyAdmin {
-        require(!isCancelled[_campaignId],                       "Campaign is cancelled");
-        require(!milestoneReleased[_campaignId][_milestoneIndex], "Funds already released for this milestone");
-        require(amountRaised[_campaignId] >= _amount,            "Not enough funds raised");
-        require(address(this).balance >= _amount,                "Contract balance too low");
 
-        milestoneReleased[_campaignId][_milestoneIndex] = true;
-        amountWithdrawn[_campaignId] += _amount;
-
-        (bool success, ) = _ownerWallet.call{value: _amount}("");
-        require(success, "Transfer to owner failed");
-
-        emit FundsReleased(_campaignId, _milestoneIndex, _ownerWallet, _amount);
-    }
 
     function withdrawFunds(uint256 _campaignId, uint256 _amount) external onlyCampaignOwner(_campaignId) {
         require(!isCancelled[_campaignId], "Campaign is cancelled");

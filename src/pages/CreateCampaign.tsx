@@ -471,20 +471,6 @@ const CreateCampaign = () => {
                             onChange={(e) => handleMilestoneChange(idx, 'percentage', e.target.value)}
                             className="w-full p-4 bg-white border border-slate-100 rounded-xl text-sm focus:ring-2 focus:ring-brand-500/20"
                           />
-                          {formData.endDate && (
-                            <p className="text-[10px] text-brand-600 mt-2 font-medium">
-                              {(() => {
-                                const end = new Date(formData.endDate).getTime();
-                                const now = Date.now();
-                                const duration = end - now;
-                                if (duration <= 0) return 'Invalid End Date';
-                                let acc = 0;
-                                for (let i = 0; i <= idx; i++) acc += (Number(milestones[i].percentage) || 0);
-                                const deadline = new Date(now + (duration * (acc / 100)));
-                                return `Deadline: ${deadline.toLocaleDateString()}`;
-                              })()}
-                            </p>
-                          )}
                         </div>
                         <div className="col-span-4">
                           <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-2 font-sans">Deliverables & Evidence</label>

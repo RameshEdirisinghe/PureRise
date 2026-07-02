@@ -33,6 +33,8 @@ import {
 import WithdrawButton from '../components/campaign/WithdrawButton';
 import { toast } from 'react-hot-toast';
 import { mongoIdToUint256 } from '../utils/formatters';
+import { openCampaignOnChain } from '../services/campaignContractService';
+import { useWallet } from '../context/WalletContext';
 
 /* ─────────────────────────────── Media Gallery ─────────────────────────── */
 const MediaGallery = ({ images, title }: { images: string[]; title: string }) => {
@@ -155,7 +157,9 @@ const CampaignOwnerDetailedView = () => {
   const [contributions, setContributions]   = useState<ContributionEvent[]>([]);
   const [withdrawals, setWithdrawals]       = useState<WithdrawalEvent[]>([]);
   const [isLoading, setIsLoading]           = useState(true);
+  const [isLaunching, setIsLaunching]       = useState(false);
   const [activeTab, setActiveTab]           = useState<'milestones' | 'backers' | 'withdrawals'>('milestones');
+  const { isConnected, connectWallet }      = useWallet();
 
   const loadData = useCallback(async (campaignId: string) => {
     try {
@@ -183,6 +187,35 @@ const CampaignOwnerDetailedView = () => {
   }, [navigate]);
 
   useEffect(() => { if (id) loadData(id); }, [id, loadData]);
+
+  const handleLaunchOnChain = async () => {
+    if (!campaign) return;
+    if (!isConnected) {
+      toast('Please connect your wallet first.', { icon: '👛' });
+      connectWallet();
+      return;
+    }
+
+    try {
+      setIsLaunching(true);
+      toast.loading('Please confirm the transaction in MetaMask...', { id: 'launch' });
+      
+      const uintId = mongoIdToUint256(campaign._id);
+      const txResult = await openCampaignOnChain(uintId);
+
+      if (txResult.success) {
+        toast.success('Campaign successfully launched on the blockchain!', { id: 'launch' });
+        // Refresh blockchain data
+        if (id) loadData(id);
+      } else {
+        toast.error(`Launch failed: ${txResult.error}`, { id: 'launch' });
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'An error occurred while launching.', { id: 'launch' });
+    } finally {
+      setIsLaunching(false);
+    }
+  };
 
   /* ── Loading ── */
   if (isLoading) {
@@ -251,6 +284,25 @@ const CampaignOwnerDetailedView = () => {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 md:px-8 py-8 space-y-8">
+
+        {/* ──────────── LAUNCH ON BLOCKCHAIN BANNER ──────────── */}
+        {campaign.status === 'active' && onChainDetails && !onChainDetails.active && (
+          <div className="bg-brand-50 border border-brand-200 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+            <div>
+              <h2 className="text-xl md:text-2xl font-black text-brand-900 mb-2">Your campaign is approved! 🎉</h2>
+              <p className="text-brand-700 text-sm md:text-base leading-relaxed max-w-2xl">
+                The PureRaise platform admins have approved your campaign. To officially start accepting contributions, you must launch it on the Ethereum blockchain.
+              </p>
+            </div>
+            <button
+              onClick={handleLaunchOnChain}
+              disabled={isLaunching}
+              className="whitespace-nowrap px-8 py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold transition-all shadow-xl shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+            >
+              {isLaunching ? 'Launching...' : 'Launch on Blockchain 🚀'}
+            </button>
+          </div>
+        )}
 
         {/* ──────────── HERO: Media + Title ──────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 items-start">

@@ -25,8 +25,15 @@ import { useNavigate } from 'react-router-dom';
 import { getMyCampaignsApi, type CampaignResponse } from '../api/campaign';
 import { toast } from 'react-hot-toast';
 import WalletButton from '../components/WalletButton';
+import { fetchCampaignDetails } from '../services/campaignReadService';
+import { mongoIdToUint256 } from '../utils/formatters';
 
 // --- Components ---
+const getImageUrl = (path: string | undefined | null) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return `https://oymigkrebvrwygfhtnme.supabase.co/storage/v1/object/public/kyc-documents/${path}`;
+};
 
 const SidebarItem = ({ icon: Icon, label, active = false, onClick }: any) => (
   <button 
@@ -58,6 +65,56 @@ const MetricCard = ({ title, value, icon: Icon, subValue }: any) => (
     </div>
   </div>
 );
+
+const CampaignTableRow = ({ c, onClick }: any) => {
+  const [raised, setRaised] = useState('0');
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let mounted = true;
+    if (c.status === 'active') {
+      const uintId = mongoIdToUint256(c._id || c.id);
+      fetchCampaignDetails(uintId).then(details => {
+        if (mounted && details) {
+          const goal = parseFloat(c.targetFunding?.toString() || '0');
+          const r = parseFloat(details.raised);
+          const p = goal > 0 ? (r / goal) * 100 : 0;
+          setRaised(details.raised);
+          setProgress(Math.min(p, 100));
+        }
+      }).catch(() => {});
+    }
+    return () => { mounted = false; };
+  }, [c]);
+
+  return (
+    <tr onClick={onClick} className="group cursor-pointer">
+      <td className="py-5">
+        <div className="font-bold text-ink group-hover:text-brand-600 transition-colors">{c.title}</div>
+        <div className="text-[10px] text-slate-400 font-medium">{c.category}</div>
+      </td>
+      <td className="py-5 w-40">
+        <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden mb-1">
+          <div className="h-full bg-brand-500 rounded-full transition-all duration-1000" style={{ width: `${progress}%` }} />
+        </div>
+        <div className="flex justify-between text-[10px] font-bold text-slate-400">
+          <span>{raised} ETH</span>
+          <span>{progress.toFixed(1)}%</span>
+        </div>
+      </td>
+      <td className="py-5 text-center">
+        <span className="px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-green-50 text-green-600">
+          {c.status}
+        </span>
+      </td>
+      <td className="py-5 text-right">
+        <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400">
+          <MoreVertical size={16} />
+        </button>
+      </td>
+    </tr>
+  );
+};
 
 const CampaignOwnerDashboard = () => {
   const { user, updateProfile, uploadProfileImage } = useAuth();
@@ -164,7 +221,7 @@ const CampaignOwnerDashboard = () => {
             <WalletButton compact />
             <div className="w-10 h-10 rounded-full bg-brand-50 border border-slate-200 flex items-center justify-center text-brand-500 overflow-hidden shadow-sm">
               {user?.profileImage ? (
-                <img src={user.profileImage} className="w-full h-full object-cover" alt="Profile" />
+                <img src={getImageUrl(user.profileImage)} className="w-full h-full object-cover" alt="Profile" />
               ) : (
                 <User size={20} />
               )}
@@ -220,31 +277,7 @@ const CampaignOwnerDashboard = () => {
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                           {activeCampaigns.map((c) => (
-                            <tr key={c.id} className="group">
-                              <td className="py-5">
-                                <div className="font-bold text-ink group-hover:text-brand-600 transition-colors">{c.title}</div>
-                                <div className="text-[10px] text-slate-400 font-medium">{c.category}</div>
-                              </td>
-                              <td className="py-5 w-40">
-                                <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden mb-1">
-                                  <div className="h-full bg-brand-500 rounded-full" style={{ width: `0%` }} />
-                                </div>
-                                <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                                  <span>0 ETH</span>
-                                  <span>0%</span>
-                                </div>
-                              </td>
-                              <td className="py-5 text-center">
-                                <span className="px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-green-50 text-green-600">
-                                  {c.status}
-                                </span>
-                              </td>
-                              <td className="py-5 text-right">
-                                <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400">
-                                  <MoreVertical size={16} />
-                                </button>
-                              </td>
-                            </tr>
+                            <CampaignTableRow key={c.id || c._id} c={c} onClick={() => navigate(`/campaign-owner/campaign/${c.id || c._id}`)} />
                           ))}
                         </tbody>
                       </table>
@@ -330,7 +363,7 @@ const CampaignOwnerDashboard = () => {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-brand-50 border border-slate-200 flex items-center justify-center text-brand-500 overflow-hidden shadow-sm">
                             {user?.profileImage ? (
-                              <img src={user.profileImage} className="w-full h-full object-cover" alt="Profile" />
+                              <img src={getImageUrl(user.profileImage)} className="w-full h-full object-cover" alt="Profile" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-brand-100 text-brand-600 font-bold">
                                 {user?.name?.charAt(0)}
