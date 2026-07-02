@@ -25,6 +25,8 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { createCampaignApi, uploadCampaignMediaApi } from '../api/campaign';
 import { getApiError } from '../context/AuthContext';
+import WalletButton from '../components/WalletButton';
+import { useWallet } from '../context/WalletContext';
 
 // --- Sub-components ---
 
@@ -82,9 +84,10 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
 const CreateCampaign = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isConnected, isCorrectNetwork } = useWallet();
+  const walletReady = isConnected && isCorrectNetwork;
   const [step, setStep] = useState(1);
   const [deploying, setDeploying] = useState(false);
-  const [walletConnected, setWalletConnected] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
 
   // Form State
@@ -239,17 +242,7 @@ const CreateCampaign = () => {
           </div>
 
           <div className="flex items-center gap-4">
-             <button 
-              onClick={() => setWalletConnected(!walletConnected)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                walletConnected 
-                  ? 'bg-green-50 text-green-600 border border-green-100' 
-                  : 'bg-slate-900 text-white hover:bg-ink'
-              }`}
-            >
-              <Wallet size={14} />
-              {walletConnected ? '0x71C...4f8' : 'Connect Wallet'}
-            </button>
+            <WalletButton compact />
             <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500">
               <User size={20} />
             </div>
@@ -559,55 +552,61 @@ const CreateCampaign = () => {
                 </div>
               </div>
             )}
+          </div>
 
-            {/* NAVIGATION BUTTONS */}
-            <div className="mt-16 flex items-center justify-between pt-8 border-t border-slate-50">
+          {/* NAVIGATION BUTTONS */}
+          <div className="mt-16 flex items-center justify-between pt-8 border-t border-slate-50">
+            <button 
+              onClick={() => {
+                setError('');
+                setSuccessMessage('');
+                setStep(step - 1);
+              }}
+              disabled={step === 1 || deploying}
+              className="flex items-center gap-2 px-8 py-4 rounded-2xl text-slate-400 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all disabled:opacity-0 font-sans"
+            >
+              <ChevronLeft size={18} />
+              Back
+            </button>
+            
+            {step < 4 ? (
               <button 
                 onClick={() => {
                   setError('');
-                  setSuccessMessage('');
-                  setStep(step - 1);
+                  setStep(step + 1);
                 }}
-                disabled={step === 1 || deploying}
-                className="flex items-center gap-2 px-8 py-4 rounded-2xl text-slate-400 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all disabled:opacity-0 font-sans"
+                disabled={(step === 3 && totalPercentage !== 100) || !formData.title || deploying}
+                className="flex items-center gap-2 px-10 py-4 bg-brand-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-ink shadow-xl shadow-brand-900/10 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale font-sans"
               >
-                <ChevronLeft size={18} />
-                Back
+                Next Step
+                <ChevronRight size={18} />
               </button>
-              
-              {step < 4 ? (
-                <button 
-                  onClick={() => {
-                    setError('');
-                    setStep(step + 1);
-                  }}
-                  disabled={(step === 3 && totalPercentage !== 100) || !formData.title || deploying}
-                  className="flex items-center gap-2 px-10 py-4 bg-brand-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-ink shadow-xl shadow-brand-900/10 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale font-sans"
-                >
-                  Next Step
-                  <ChevronRight size={18} />
-                </button>
-              ) : (
-                <button 
-                  onClick={handleDeploy}
-                  disabled={deploying || totalPercentage !== 100 || !formData.coverImage}
-                  className="flex items-center gap-3 px-12 py-4 bg-brand-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-brand-700 shadow-xl shadow-brand-600/20 transition-all active:scale-95 disabled:opacity-70 disabled:grayscale font-sans"
-                >
-                  {deploying ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Creating Campaign...
-                    </>
-                  ) : (
-                    <>
-                      <Rocket size={18} />
-                      Confirm & Deploy to Mainnet
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-
+            ) : walletReady ? (
+              <button 
+                onClick={handleDeploy}
+                disabled={deploying || totalPercentage !== 100 || !formData.coverImage}
+                className="flex items-center gap-3 px-12 py-4 bg-brand-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-brand-700 shadow-xl shadow-brand-600/20 transition-all active:scale-95 disabled:opacity-70 disabled:grayscale font-sans"
+              >
+                {deploying ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Creating Campaign...
+                  </>
+                ) : (
+                  <>
+                    <Rocket size={18} />
+                    Confirm & Deploy to Sepolia
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="flex flex-col items-end gap-2">
+                <WalletButton />
+                <p className="text-[10px] text-slate-400 font-medium">
+                  Wallet connection required to deploy
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </main>

@@ -19,6 +19,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getActiveCampaignsApi, type CampaignResponse } from '../api/campaign';
 import { toast } from 'react-hot-toast';
+import WalletButton from '../components/WalletButton';
 
 // --- Styled Components & Sub-components ---
 
@@ -159,7 +160,6 @@ const ContributorDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [walletConnected, setWalletConnected] = useState(false);
   const [savedCampaigns, setSavedCampaigns] = useState<string[]>([]);
   const [showWatchlist, setShowWatchlist] = useState(false);
   const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
@@ -323,17 +323,7 @@ const ContributorDashboard = () => {
               )}
             </button>
 
-            <button 
-              onClick={() => setWalletConnected(!walletConnected)}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg ${
-                walletConnected 
-                  ? 'bg-green-50 text-green-600 border border-green-100 shadow-green-500/10' 
-                  : 'bg-slate-900 text-white hover:bg-ink shadow-slate-900/20'
-              }`}
-            >
-              <Wallet size={14} />
-              {walletConnected ? '0x71C...4f8' : 'Connect Wallet'}
-            </button>
+            <WalletButton compact />
 
             <div className="w-11 h-11 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 overflow-hidden shadow-sm group cursor-pointer hover:border-brand-300 transition-all" onClick={() => setActiveTab('settings')}>
               {user?.profileImage ? (

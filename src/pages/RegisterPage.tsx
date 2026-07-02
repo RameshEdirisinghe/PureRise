@@ -34,7 +34,7 @@ const BrandPanel = () => (
 // ── Page ───────────────────────────────────────────────────────────────────────
 const RegisterPage = () => (
   <div className="h-screen overflow-hidden flex text-ink bg-white">
-    {/* Left — form panel (2/5) */}
+
     <div className="w-full lg:w-2/5 flex flex-col relative z-20 border-r border-slate-100 shadow-2xl shadow-black/5">
       {/* Nav */}
       <nav className="flex items-center justify-between px-12 py-10">
@@ -77,7 +77,6 @@ const RegisterPage = () => (
       </footer>
     </div>
 
-    {/* Right — showcase (3/5) */}
     <div className="hidden lg:block w-3/5 relative overflow-hidden">
       <BrandPanel />
     </div>

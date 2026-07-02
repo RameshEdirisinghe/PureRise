@@ -1,8 +1,8 @@
 import LoginForm from '../components/LoginForm';
 import { Link } from 'react-router-dom';
 import crowdfundingImg from '../assets/crowdfunding.jpg';
+import WalletButton from '../components/WalletButton';
 
-// ── Right panel — Minimal image showcase ──────────────────────────────────────
 const BrandPanel = () => (
   <div className="relative w-full h-full overflow-hidden bg-ink">
     <img 
@@ -22,8 +22,7 @@ const BrandPanel = () => (
         </p>
       </div>
     </div>
-    
-    {/* Minimal Trust Badge */}
+
     <div className="absolute top-12 left-12 flex items-center gap-2 px-6 py-3 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white/80 text-[0.7rem] font-bold uppercase tracking-[0.2em] shadow-2xl">
       <div className="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse"></div>
       Secure Decentralized Network
@@ -31,10 +30,8 @@ const BrandPanel = () => (
   </div>
 );
 
-// ── Page ───────────────────────────────────────────────────────────────────────
 const LoginPage = () => (
   <div className="h-screen overflow-hidden flex text-ink bg-white">
-    {/* Left — form panel (2/5) */}
     <div className="w-full lg:w-2/5 flex flex-col relative z-20 border-r border-slate-100 shadow-2xl shadow-black/5">
       {/* Nav */}
       <nav className="flex items-center justify-between px-12 py-10">
@@ -52,8 +49,20 @@ const LoginPage = () => (
       <div className="flex-1 flex flex-col justify-center px-12 xl:px-20">
         <div className="max-w-[380px] w-full mx-auto">
           <LoginForm />
+
+          {/* ── Wallet Connection ─────────────────────────── */}
+          <div className="mt-8 pt-8 border-t border-slate-100">
+            <p className="text-[0.7rem] font-bold text-ink-muted uppercase tracking-widest mb-4">
+              Blockchain Access
+            </p>
+            <WalletButton />
+            <p className="mt-3 text-[0.65rem] text-ink-faint leading-relaxed">
+              Connect your MetaMask wallet to donate, create campaigns,
+              and interact with the Sepolia smart contract.
+            </p>
+          </div>
           
-          <div className="mt-12 pt-8 border-t border-slate-100 flex items-center justify-between gap-4">
+          <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between gap-4">
             <div className="text-[0.75rem] text-ink-muted font-bold uppercase tracking-widest leading-none">
               New here?
             </div>
@@ -77,7 +86,6 @@ const LoginPage = () => (
       </footer>
     </div>
 
-    {/* Right — showcase (3/5) */}
     <div className="hidden lg:block w-3/5 relative overflow-hidden">
       <BrandPanel />
     </div>

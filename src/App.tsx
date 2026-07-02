@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
+import { WalletProvider } from './context/WalletContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -26,35 +27,37 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Toaster position="top-right" />
-        <Routes>
-          {/* Public routes */}
-          <Route path="/"         element={<LandingPage />} />
-          <Route path="/login"    element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/onboarding/campaign-owner" element={<CampaignOwnerOnboarding />} />
-          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        <WalletProvider>
+          <Toaster position="top-right" />
+          <Routes>
+            {/* Public routes */}
+            <Route path="/"         element={<LandingPage />} />
+            <Route path="/login"    element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/onboarding/campaign-owner" element={<CampaignOwnerOnboarding />} />
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-          {/* Contributor-only routes */}
-          <Route element={<ProtectedRoute allowedRoles={['contributor']} />}>
-            <Route path="/contributor/dashboard" element={<ContributorDashboard />} />
-            <Route path="/campaign/:id" element={<CampaignDetails />} />
-          </Route>
+            {/* Contributor-only routes */}
+            <Route element={<ProtectedRoute allowedRoles={['contributor']} />}>
+              <Route path="/contributor/dashboard" element={<ContributorDashboard />} />
+              <Route path="/campaign/:id" element={<CampaignDetails />} />
+            </Route>
 
-          {/* Admin-only routes */}
-          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          </Route>
+            {/* Admin-only routes */}
+            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            </Route>
 
-          {/* Campaign Owner routes */}
-          <Route element={<ProtectedRoute allowedRoles={['projectOwner']} />}>
-            <Route path="/campaign-owner/dashboard" element={<CampaignOwnerDashboard />} />
-            <Route path="/campaign-owner/create" element={<CreateCampaign />} />
-          </Route>
+            {/* Campaign Owner routes */}
+            <Route element={<ProtectedRoute allowedRoles={['projectOwner']} />}>
+              <Route path="/campaign-owner/dashboard" element={<CampaignOwnerDashboard />} />
+              <Route path="/campaign-owner/create" element={<CreateCampaign />} />
+            </Route>
 
-          {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </WalletProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -346,7 +346,7 @@ const AdminDashboard = () => {
                       </div>
                       <div>
                         <h3 className="font-bold text-ink leading-tight">{req.fullName}</h3>
-                        <p className="text-xs text-slate-400 font-medium">{req.userId.email}</p>
+                        <p className="text-xs text-slate-400 font-medium">{req.userId?.email || 'Unknown Email'}</p>
                       </div>
                     </div>
 
@@ -410,7 +410,7 @@ const AdminDashboard = () => {
                       <h3 className="font-bold text-ink text-lg mb-1 truncate">{camp.title}</h3>
                       <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
                         <User size={12} />
-                        <span>By {camp.ownerId.name}</span>
+                        <span>By {camp.ownerId?.name || 'Unknown User'}</span>
                       </div>
                     </div>
 
@@ -722,11 +722,11 @@ const AdminDashboard = () => {
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-3">Owner Information</label>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">
-                          {selectedCampaign.ownerId.name.charAt(0)}
+                          {selectedCampaign.ownerId?.name?.charAt(0) || '?'}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-ink">{selectedCampaign.ownerId.name}</p>
-                          <p className="text-xs text-slate-400">{selectedCampaign.ownerId.email}</p>
+                          <p className="text-sm font-bold text-ink">{selectedCampaign.ownerId?.name || 'Unknown User'}</p>
+                          <p className="text-xs text-slate-400">{selectedCampaign.ownerId?.email || 'Unknown Email'}</p>
                         </div>
                       </div>
                     </div>

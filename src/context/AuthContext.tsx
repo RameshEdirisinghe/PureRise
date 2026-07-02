@@ -18,6 +18,8 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   profileImage?: string;
+  walletAddress?: string | null;
+  isWalletConnected?: boolean;
 }
 
 interface RegisterPayload {

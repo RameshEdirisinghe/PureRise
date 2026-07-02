@@ -24,6 +24,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getMyCampaignsApi, type CampaignResponse } from '../api/campaign';
 import { toast } from 'react-hot-toast';
+import WalletButton from '../components/WalletButton';
 
 // --- Components ---
 
@@ -68,7 +69,7 @@ const CampaignOwnerDashboard = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.profileImage || null);
-  const [walletConnected, setWalletConnected] = useState(false);
+  const [walletConnected] = useState(false); // replaced by WalletContext
 
   const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -160,17 +161,7 @@ const CampaignOwnerDashboard = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setWalletConnected(!walletConnected)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                walletConnected 
-                  ? 'bg-green-50 text-green-600 border border-green-100' 
-                  : 'bg-slate-900 text-white hover:bg-ink'
-              }`}
-            >
-              <Wallet size={14} />
-              {walletConnected ? '0x71C...4f8' : 'Connect Wallet'}
-            </button>
+            <WalletButton compact />
             <div className="w-10 h-10 rounded-full bg-brand-50 border border-slate-200 flex items-center justify-center text-brand-500 overflow-hidden shadow-sm">
               {user?.profileImage ? (
                 <img src={user.profileImage} className="w-full h-full object-cover" alt="Profile" />
