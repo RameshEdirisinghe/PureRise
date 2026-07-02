@@ -6,28 +6,12 @@ import { withdrawCampaignFunds } from '../../services/campaignContractService';
 import { mongoIdToUint256 } from '../../utils/formatters';
 
 interface WithdrawButtonProps {
-  /** MongoDB _id of the campaign (24-char hex string) */
   campaignMongoId: string;
-  /** Campaign owner address as returned by getCampaignDetails (will be lowercased for comparison) */
   campaignOwner:   string;
-  /** Max ETH available to withdraw (used as input ceiling; pass "0" to disable) */
   availableEth:    string;
-  /** Optional callback after a successful withdrawal */
   onSuccess?: (txHash: string) => void;
 }
 
-/**
- * WithdrawButton
- *
- * Conditionally renders ONLY when the connected wallet matches the campaign owner.
- * The comparison is case-insensitive to handle checksummed vs lowercase addresses.
- *
- * Renders null (invisible) when:
- *   - No wallet is connected.
- *   - The connected wallet is NOT the campaign owner.
- *
- * When visible, lets the owner enter an ETH amount and call withdrawFunds().
- */
 const WithdrawButton: React.FC<WithdrawButtonProps> = ({
   campaignMongoId,
   campaignOwner,
@@ -38,7 +22,6 @@ const WithdrawButton: React.FC<WithdrawButtonProps> = ({
   const [amount, setAmount]       = useState('');
   const [isPending, setIsPending] = useState(false);
 
-  // ── Ownership guard (case-insensitive) ────────────────────────────────────
   const isOwner =
     isConnected &&
     walletAddress !== null &&
@@ -46,7 +29,6 @@ const WithdrawButton: React.FC<WithdrawButtonProps> = ({
 
   if (!isOwner) return null;
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -86,7 +68,6 @@ const WithdrawButton: React.FC<WithdrawButtonProps> = ({
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <form
       onSubmit={handleWithdraw}

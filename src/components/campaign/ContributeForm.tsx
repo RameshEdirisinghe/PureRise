@@ -6,21 +6,10 @@ import { contributeToCampaign } from '../../services/campaignContractService';
 import { mongoIdToUint256 } from '../../utils/formatters';
 
 interface ContributeFormProps {
-  /** MongoDB _id of the campaign (24-char hex string) */
   campaignMongoId: string;
-  /** Optional callback invoked after a successful contribution */
   onSuccess?: (txHash: string) => void;
 }
 
-/**
- * ContributeForm
- *
- * Lets a connected donor enter an ETH amount and donate to a campaign.
- * - Validates input (positive number, reasonable precision).
- * - Converts the MongoDB _id to a uint256 campaignId internally.
- * - Shows MetaMask-confirmation feedback via react-hot-toast.
- * - Returns { success, txHash, error } and delegates UI feedback to toasts.
- */
 const ContributeForm: React.FC<ContributeFormProps> = ({ campaignMongoId, onSuccess }) => {
   const { isConnected, connectWallet } = useWallet();
   const [amount, setAmount]     = useState('');
