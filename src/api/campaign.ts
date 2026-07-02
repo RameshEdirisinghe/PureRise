@@ -21,6 +21,16 @@ export interface CreateCampaignPayload {
   milestones: IMilestone[];
 }
 
+export interface CampaignContribution {
+  walletAddress: string;
+  name: string;
+  email: string;
+  profileImage?: string | null;
+  amountEth: string;
+  txHash: string;
+  timestamp: string;
+}
+
 export interface CampaignResponse {
   id: string;
   _id?: string;           // raw Mongo _id (returned by backend alongside 'id')
@@ -36,6 +46,8 @@ export interface CampaignResponse {
   endDate: string;
   milestones: any[];
   media?: string[];
+  contributions?: CampaignContribution[];
+  contributorCount?: number;
   owner?: {
     name: string;
     email: string;
@@ -201,6 +213,52 @@ export const getCampaignByIdApi = async (id: string): Promise<CampaignResponse> 
       message: string;
       data: CampaignResponse;
     }>(`/campaigns/${id}`);
+    return data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Record a confirmed on-chain contribution with contributor identity.
+ * Call this immediately after tx.wait() resolves successfully.
+ * Non-fatal: if this fails, the contribution is still on-chain.
+ */
+export const recordContributionApi = async (
+  campaignId: string,
+  payload: { walletAddress: string; amountEth: string; txHash: string }
+): Promise<void> => {
+  try {
+    await api.post(`/campaigns/${campaignId}/contribution`, payload);
+  } catch (error) {
+    console.error('Failed to record contribution in DB:', error);
+  }
+};
+
+export interface MyContributionsResponse {
+  contributions: Array<{
+    campaignId: string;
+    campaignTitle: string;
+    campaignCoverImage: string;
+    campaignStatus: string;
+    amountEth: string;
+    txHash: string;
+    timestamp: string;
+  }>;
+  totalAmountEth: string;
+  totalCampaigns: number;
+}
+
+/**
+ * Get all contributions made by the authenticated contributor.
+ */
+export const getMyContributionsApi = async (): Promise<MyContributionsResponse> => {
+  try {
+    const { data } = await api.get<{
+      success: boolean;
+      message: string;
+      data: MyContributionsResponse;
+    }>('/campaigns/my-contributions');
     return data.data;
   } catch (error) {
     throw error;

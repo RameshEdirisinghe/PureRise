@@ -18,7 +18,8 @@ import {
   Search,
   Bell,
   User,
-  MoreVertical
+  MoreVertical,
+  LogOut
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -116,8 +117,93 @@ const CampaignTableRow = ({ c, onClick }: any) => {
   );
 };
 
+const CampaignGridCard = ({ c, onClick }: any) => {
+  const [raised, setRaised] = useState('0');
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let mounted = true;
+    if (c.status === 'active') {
+      const uintId = mongoIdToUint256(c._id || c.id);
+      fetchCampaignDetails(uintId).then(details => {
+        if (mounted && details) {
+          const goal = parseFloat(c.targetFunding?.toString() || '0');
+          const r = parseFloat(details.raised);
+          const p = goal > 0 ? (r / goal) * 100 : 0;
+          setRaised(details.raised);
+          setProgress(Math.min(p, 100));
+        }
+      }).catch(() => {});
+    }
+    return () => { mounted = false; };
+  }, [c]);
+
+  return (
+    <div
+      onClick={onClick}
+      className="group cursor-pointer bg-white rounded-[32px] border border-slate-100 overflow-hidden hover:border-brand-200 hover:shadow-2xl hover:shadow-brand-500/5 transition-all duration-500"
+    >
+      <div className="aspect-video w-full relative overflow-hidden bg-slate-100">
+        {c.coverImage ? (
+          <img
+            src={c.coverImage}
+            alt={c.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Megaphone size={40} className="text-slate-200" />
+          </div>
+        )}
+        <div className="absolute top-4 left-4">
+          <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border ${
+            c.status === 'active'           ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+            c.status === 'pending_approval' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+            c.status === 'rejected'         ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+            'bg-slate-500/10 text-slate-500 border-slate-500/20'
+          }`}>
+            {c.status.replace('_', ' ')}
+          </span>
+        </div>
+        <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+          <div className="flex items-center gap-2 bg-white text-slate-900 px-5 py-2.5 rounded-2xl font-bold text-sm shadow-xl transform translate-y-3 group-hover:translate-y-0 transition-transform duration-300">
+            <ArrowUpRight size={16} />
+            View Details
+          </div>
+        </div>
+      </div>
+      <div className="p-6">
+        <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest mb-2">{c.category}</p>
+        <h3 className="font-bold text-ink mb-2 line-clamp-1 group-hover:text-brand-600 transition-colors">{c.title}</h3>
+        <p className="text-xs text-slate-400 line-clamp-2 mb-6 min-h-[32px]">{c.summary}</p>
+        <div className="space-y-4">
+          <div>
+            <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5">
+              <span>Progress</span>
+              <span>{progress.toFixed(1)}%</span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
+              <div className="h-full bg-brand-500 rounded-full" style={{ width: `${progress}%` }} />
+            </div>
+          </div>
+          <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+            <div>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Raised</p>
+              <p className="text-sm font-bold text-ink">{parseFloat(raised).toFixed(3)} ETH</p>
+            </div>
+            <div>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Goal</p>
+              <p className="text-sm font-bold text-ink">{c.targetFunding} ETH</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CampaignOwnerDashboard = () => {
-  const { user, updateProfile, uploadProfileImage } = useAuth();
+  const { user, logout, updateProfile, uploadProfileImage } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   
@@ -130,6 +216,8 @@ const CampaignOwnerDashboard = () => {
 
   const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [totalRaised, setTotalRaised] = useState('0.00');
+  const [totalContributors, setTotalContributors] = useState(0);
 
   useEffect(() => {
     fetchCampaigns();
@@ -148,10 +236,43 @@ const CampaignOwnerDashboard = () => {
     }
   };
 
+  useEffect(() => {
+    let mounted = true;
+    const fetchStats = async () => {
+      let sumRaised = 0;
+      let sumContributors = 0;
+      for (const c of campaigns) {
+        if (c.status === 'active') {
+          try {
+            const details = await fetchCampaignDetails(mongoIdToUint256(c.id || c._id));
+            sumRaised += parseFloat(details.raised || '0');
+          } catch (e) {}
+        }
+        sumContributors += (c.contributions?.length || 0);
+      }
+      if (mounted) {
+        setTotalRaised(sumRaised.toString());
+        setTotalContributors(sumContributors);
+      }
+    };
+    if (campaigns.length > 0) {
+      fetchStats();
+    }
+    return () => { mounted = false; };
+  }, [campaigns]);
+
   const activeCampaigns = campaigns.filter(c => c.status === 'active');
 
-  const milestones = [];
-  const contributions = [];
+  // Flatten milestones
+  const allMilestones = campaigns
+    .flatMap(c => (c.milestones || []).map(m => ({ ...m, campaignId: c.id || c._id, campaignTitle: c.title })))
+    .sort((a, b) => new Date(a.expectedCompletionDate).getTime() - new Date(b.expectedCompletionDate).getTime());
+
+  // Flatten contributions
+  const allContributions = campaigns
+    .flatMap(c => (c.contributions || []).map(cont => ({ ...cont, campaignTitle: c.title })))
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 10); // top 10 recent backers
 
   const handleProfileUpdate = async () => {
     try {
@@ -198,10 +319,19 @@ const CampaignOwnerDashboard = () => {
           <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
           <SidebarItem icon={Megaphone} label="My Campaigns" active={activeTab === 'campaigns'} onClick={() => setActiveTab('campaigns')} />
           <SidebarItem icon={PlusCircle} label="Create Campaign" active={activeTab === 'create'} onClick={() => navigate('/campaign-owner/create')} />
-          <SidebarItem icon={Milestone} label="Milestones" active={activeTab === 'milestones'} onClick={() => setActiveTab('milestones')} />
           <SidebarItem icon={History} label="Withdrawals" active={activeTab === 'history'} onClick={() => setActiveTab('history')} />
           <SidebarItem icon={Settings} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
+
+        <div className="absolute bottom-8 left-6 right-6">
+          <button
+            onClick={logout}
+            className="w-full py-3 px-4 rounded-xl border border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-widest hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex items-center justify-center gap-2"
+          >
+            <LogOut size={14} />
+            Logout
+          </button>
+        </div>
       </aside>
 
       {/* Main Content */}
@@ -231,11 +361,10 @@ const CampaignOwnerDashboard = () => {
 
         <div className="p-8">
           {/* Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <MetricCard title="Total Raised" value="0.00" subValue="ETH" icon={TrendingUp} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <MetricCard title="Total Raised" value={parseFloat(totalRaised).toFixed(3)} subValue="ETH" icon={TrendingUp} />
             <MetricCard title="Campaigns" value={campaigns.length} icon={Megaphone} />
-            <MetricCard title="Contributors" value="0" icon={UsersIcon} />
-            <MetricCard title="Next Milestone" value="--" subValue="Days" icon={Calendar} />
+            <MetricCard title="Contributors" value={totalContributors} icon={UsersIcon} />
           </div>
 
           {activeTab === 'overview' && (
@@ -288,56 +417,32 @@ const CampaignOwnerDashboard = () => {
               {/* Milestone Tracking */}
               <div className="bg-white rounded-[32px] p-8 border border-slate-100">
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-lg font-bold text-ink">Milestone Progress</h2>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase">Locked</p>
-                      <p className="text-sm font-bold text-ink">0.0 ETH</p>
-                    </div>
-                    <div className="text-right border-l border-slate-100 pl-4">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase">Available</p>
-                      <p className="text-sm font-bold text-brand-600">0.0 ETH</p>
-                    </div>
-                  </div>
+                  <h2 className="text-lg font-bold text-ink">Upcoming Milestones</h2>
                 </div>
 
                 <div className="space-y-8 relative before:absolute before:left-5 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
-                  {milestones.length === 0 ? (
+                  {allMilestones.length === 0 ? (
                     <div className="text-center py-10 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 ml-5">
                       <Milestone className="mx-auto text-slate-300 mb-2" size={24} />
                       <p className="text-slate-400 text-xs font-bold">No milestones tracking yet</p>
                     </div>
                   ) : (
-                    milestones.map((m: any) => (
-                    <div key={m.id} className="relative pl-12 group">
-                      <div className={`absolute left-0 top-0 w-10 h-10 rounded-xl flex items-center justify-center border-2 border-white shadow-sm ${
-                        m.status === 'Verified' ? 'bg-green-500 text-white' : 
-                        m.status === 'In Progress' ? 'bg-brand-500 text-white' : 
-                        'bg-slate-100 text-slate-300'
-                      }`}>
-                        {m.status === 'Verified' ? <CheckCircle2 size={18} /> : 
-                         m.status === 'In Progress' ? <Clock size={18} className="animate-spin-slow" /> : 
-                         <Milestone size={18} />}
+                    allMilestones.map((m: any, idx: number) => (
+                    <div key={idx} className="relative pl-12 group cursor-pointer" onClick={() => navigate(`/campaign-owner/campaign/${m.campaignId}`)}>
+                      <div className={`absolute left-0 top-0 w-10 h-10 rounded-xl flex items-center justify-center border-2 border-white shadow-sm bg-slate-100 text-slate-300 group-hover:bg-brand-500 group-hover:text-white transition-colors`}>
+                         <Milestone size={18} />
                       </div>
 
                       <div className="flex items-start justify-between">
                         <div>
-                          <h4 className="text-sm font-bold text-ink">{m.title}</h4>
-                          <p className="text-xs text-slate-400 font-medium mb-3">{m.date} • Verified On-Chain</p>
+                          <h4 className="text-sm font-bold text-ink group-hover:text-brand-600 transition-colors">{m.title}</h4>
+                          <p className="text-xs text-brand-500 font-bold mb-3">{m.campaignTitle}</p>
                           <div className="flex gap-2">
                             <span className="px-2 py-1 bg-slate-50 rounded-lg text-[9px] font-bold text-slate-400 border border-slate-100">
-                              LOCKED: {m.locked} ETH
-                            </span>
-                            <span className="px-2 py-1 bg-brand-50 rounded-lg text-[9px] font-bold text-brand-600 border border-brand-100">
-                              RELEASE: {m.available} ETH
+                              Target Date: {new Date(m.expectedCompletionDate).toLocaleDateString()}
                             </span>
                           </div>
                         </div>
-                        {m.status === 'In Progress' && (
-                          <button className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-ink">
-                            Submit Proof
-                          </button>
-                        )}
                       </div>
                     </div>
                     ))
@@ -352,30 +457,30 @@ const CampaignOwnerDashboard = () => {
               <div className="bg-white rounded-[32px] p-8 border border-slate-100">
                 <h3 className="text-sm font-bold text-ink mb-6">Recent Backers</h3>
                 <div className="space-y-6">
-                  {contributions.length === 0 ? (
+                  {allContributions.length === 0 ? (
                     <div className="text-center py-8">
                       <UsersIcon className="mx-auto text-slate-200 mb-2" size={24} />
                       <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">No backers yet</p>
                     </div>
                   ) : (
-                    contributions.map((c: any) => (
-                      <div key={c.id} className="flex items-center justify-between">
+                    allContributions.map((c: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-brand-50 border border-slate-200 flex items-center justify-center text-brand-500 overflow-hidden shadow-sm">
-                            {user?.profileImage ? (
-                              <img src={getImageUrl(user.profileImage)} className="w-full h-full object-cover" alt="Profile" />
+                            {c.profileImage ? (
+                              <img src={c.profileImage} className="w-full h-full object-cover" alt="Profile" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-brand-100 text-brand-600 font-bold">
-                                {user?.name?.charAt(0)}
+                                {c.name?.charAt(0)}
                               </div>
                             )}
                           </div>
                           <div>
-                            <p className="text-[11px] font-bold text-ink">{c.wallet}</p>
-                            <p className="text-[9px] font-medium text-slate-400">{c.time}</p>
+                            <p className="text-[11px] font-bold text-ink">{c.name}</p>
+                            <p className="text-[9px] font-medium text-brand-500 max-w-[120px] truncate">{c.campaignTitle}</p>
                           </div>
                         </div>
-                        <p className="text-xs font-bold text-brand-600">+{c.amount} ETH</p>
+                        <p className="text-xs font-bold text-brand-600">+{c.amountEth} ETH</p>
                       </div>
                     ))
                   )}
@@ -403,16 +508,6 @@ const CampaignOwnerDashboard = () => {
                 </div>
               </div>
 
-              {/* Support / Quick Update */}
-              <div className="bg-brand-50 rounded-[32px] p-8 border border-brand-100">
-                <h3 className="text-sm font-bold text-brand-900 mb-2">Backer Engagement</h3>
-                <p className="text-xs text-brand-900/60 leading-relaxed mb-6">
-                  Transparency builds trust. Post a project update to your backers.
-                </p>
-                <button className="w-full py-3 rounded-xl bg-brand-600 text-white text-[10px] font-bold uppercase tracking-wider hover:bg-brand-700 shadow-lg shadow-brand-600/20">
-                  Post Update
-                </button>
-                </div>
               </div>
             </div>
           )}
@@ -458,77 +553,7 @@ const CampaignOwnerDashboard = () => {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {campaigns.map((c) => {
-                      const campaignId = c._id || c.id;
-                      return (
-                        <div
-                          key={c.id}
-                          onClick={() => navigate(`/campaign-owner/campaign/${campaignId}`)}
-                          className="group cursor-pointer bg-white rounded-[32px] border border-slate-100 overflow-hidden hover:border-brand-200 hover:shadow-2xl hover:shadow-brand-500/5 transition-all duration-500"
-                        >
-                          {/* Cover image with overlay */}
-                          <div className="aspect-video w-full relative overflow-hidden bg-slate-100">
-                            {c.coverImage ? (
-                              <img
-                                src={c.coverImage}
-                                alt={c.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Megaphone size={40} className="text-slate-200" />
-                              </div>
-                            )}
-
-                            {/* Status badge */}
-                            <div className="absolute top-4 left-4">
-                              <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border ${
-                                c.status === 'active'           ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                                c.status === 'pending_approval' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-                                c.status === 'rejected'         ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                'bg-slate-500/10 text-slate-500 border-slate-500/20'
-                              }`}>
-                                {c.status.replace('_', ' ')}
-                              </span>
-                            </div>
-
-                            {/* Hover overlay */}
-                            <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                              <div className="flex items-center gap-2 bg-white text-slate-900 px-5 py-2.5 rounded-2xl font-bold text-sm shadow-xl transform translate-y-3 group-hover:translate-y-0 transition-transform duration-300">
-                                <ArrowUpRight size={16} />
-                                View Details
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="p-6">
-                            <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest mb-2">{c.category}</p>
-                            <h3 className="font-bold text-ink mb-2 line-clamp-1 group-hover:text-brand-600 transition-colors">{c.title}</h3>
-                            <p className="text-xs text-slate-400 line-clamp-2 mb-6 min-h-[32px]">{c.summary}</p>
-
-                            <div className="space-y-4">
-                              <div>
-                                <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5">
-                                  <span>Progress</span>
-                                  <span>0%</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
-                                  <div className="h-full bg-brand-500 rounded-full" style={{ width: '0%' }} />
-                                </div>
-                              </div>
-
-                              <div className="flex items-center justify-between pt-2 border-t border-slate-50">
-                                <div>
-                                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Goal</p>
-                                  <p className="text-sm font-bold text-ink">{c.targetFunding} ETH</p>
-                                </div>
-                                <div className="p-2.5 bg-brand-50 text-brand-500 rounded-xl group-hover:bg-brand-500 group-hover:text-white transition-colors">
-                                  <ArrowUpRight size={18} />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
+                      return <CampaignGridCard key={c.id || c._id} c={c} onClick={() => navigate(`/campaign-owner/campaign/${c.id || c._id}`)} />;
                     })}
                   </div>
                 )}

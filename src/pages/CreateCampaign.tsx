@@ -3,7 +3,6 @@ import {
   LayoutDashboard, 
   Megaphone, 
   PlusCircle, 
-  Milestone, 
   History, 
   Settings, 
   Wallet, 
@@ -19,7 +18,8 @@ import {
   User,
   Bell,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  LogOut
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -82,13 +82,14 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
 // --- Main Page ---
 
 const CreateCampaign = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { isConnected, isCorrectNetwork } = useWallet();
   const walletReady = isConnected && isCorrectNetwork;
   const [step, setStep] = useState(1);
   const [deploying, setDeploying] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -105,22 +106,24 @@ const CreateCampaign = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Show local preview immediately
+    const localUrl = URL.createObjectURL(file);
+    setImagePreview(localUrl);
+
     try {
       setError('');
       setUploadLoading(true);
-      
-      // Use the campaign API client for consistent error handling and automatic cookie inclusion
       const result = await uploadCampaignMediaApi(file);
       setFormData(prev => ({ ...prev, coverImage: result.filePath }));
-      
     } catch (err: any) {
       console.error('Upload error:', err);
-      // Check if there's a helpful user-friendly message from the API client
       if (err.userFriendlyMessage) {
         setError(err.userFriendlyMessage);
       } else {
         setError(getApiError(err) || 'Failed to upload media. Please try again.');
       }
+      // Clear preview if upload fails
+      setImagePreview(null);
     } finally {
       setUploadLoading(false);
     }
@@ -220,12 +223,21 @@ const CreateCampaign = () => {
 
         <nav className="space-y-1">
           <SidebarItem icon={LayoutDashboard} label="Dashboard" onClick={() => navigate('/campaign-owner/dashboard')} />
-          <SidebarItem icon={Megaphone} label="My Campaigns" />
+          <SidebarItem icon={Megaphone} label="My Campaigns" onClick={() => navigate('/campaign-owner/dashboard')} />
           <SidebarItem icon={PlusCircle} label="Create Campaign" active />
-          <SidebarItem icon={Milestone} label="Milestones" />
-          <SidebarItem icon={History} label="Withdrawals" />
-          <SidebarItem icon={Settings} label="Settings" />
+          <SidebarItem icon={History} label="Withdrawals" onClick={() => navigate('/campaign-owner/dashboard')} />
+          <SidebarItem icon={Settings} label="Settings" onClick={() => navigate('/campaign-owner/dashboard')} />
         </nav>
+
+        <div className="absolute bottom-8 left-6 right-6">
+          <button
+            onClick={logout}
+            className="w-full py-3 px-4 rounded-xl border border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-widest hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex items-center justify-center gap-2"
+          >
+            <LogOut size={14} />
+            Logout
+          </button>
+        </div>
       </aside>
 
       {/* Main Content */}
@@ -348,19 +360,29 @@ const CreateCampaign = () => {
                         <div className="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
                         <p className="text-sm font-bold text-brand-600 font-sans">Uploading to Supabase...</p>
                       </div>
-                    ) : formData.coverImage ? (
+                    ) : (imagePreview || formData.coverImage) ? (
                       <div className="space-y-4">
                         <div className="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative">
-                           <img 
-                            src={`https://oymigkrebvrwygfhtnme.supabase.co/storage/v1/object/public/campaign-media/${formData.coverImage}`} 
-                            alt="Preview" 
+                           <img
+                            src={imagePreview || `https://oymigkrebvrwygfhtnme.supabase.co/storage/v1/object/public/kyc-documents/${formData.coverImage}`}
+                            alt="Preview"
                             className="w-full h-full object-cover"
                            />
-                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                             <p className="text-white text-xs font-bold uppercase tracking-widest">Change Media</p>
-                           </div>
+                           {uploadLoading && (
+                             <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center gap-2">
+                               <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                               <p className="text-xs font-bold text-brand-600">Uploading to storage…</p>
+                             </div>
+                           )}
+                           {!uploadLoading && (
+                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                               <p className="text-white text-xs font-bold uppercase tracking-widest">Change Media</p>
+                             </div>
+                           )}
                         </div>
-                        <p className="text-[10px] text-green-600 font-bold uppercase">✓ Uploaded successfully</p>
+                        {formData.coverImage && !uploadLoading && (
+                          <p className="text-[10px] text-green-600 font-bold uppercase">✓ Uploaded successfully</p>
+                        )}
                       </div>
                     ) : (
                       <>

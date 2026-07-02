@@ -1,58 +1,99 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Share2, 
-  Heart, 
-  Clock, 
-  TrendingUp, 
-  ShieldCheck, 
+import {
+  ArrowLeft,
+  Share2,
+  Heart,
+  Clock,
+  TrendingUp,
+  ShieldCheck,
   Users,
   Target,
-  ChevronRight,
   Info,
   Calendar,
   CheckCircle2,
-  Wallet
+  ExternalLink,
 } from 'lucide-react';
 import { getCampaignByIdApi, type CampaignResponse } from '../api/campaign';
 import { toast } from 'react-hot-toast';
+import { fetchCampaignDetails } from '../services/campaignReadService';
+import { mongoIdToUint256 } from '../utils/formatters';
+import ContributeForm from '../components/campaign/ContributeForm';
 
 const CampaignDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [campaign, setCampaign] = useState<CampaignResponse | null>(null);
+  const [campaign, setCampaign]   = useState<CampaignResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaved, setIsSaved] = useState(false);
-  const [contributionAmount, setContributionAmount] = useState('');
+  const [isSaved, setIsSaved]     = useState(false);
+
+  // On-chain live stats
+  const [raisedEth, setRaisedEth]     = useState('0.00');
+  const [progress, setProgress]       = useState(0);
+  const [backerCount, setBackerCount] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  const fetchOnChainStats = useCallback(async (c: CampaignResponse) => {
+    if (!c._id && !c.id) return;
+    setStatsLoading(true);
+    try {
+      const campaignId = mongoIdToUint256(c._id || c.id);
+      const details    = await fetchCampaignDetails(campaignId);
+      const raised     = parseFloat(details.raised);
+      const goal       = parseFloat(c.targetFunding?.toString() || '0');
+      const pct        = goal > 0 ? Math.min((raised / goal) * 100, 100) : 0;
+      setRaisedEth(details.raised);
+      setProgress(pct);
+    } catch {
+      // chain not reachable — leave defaults
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchCampaignDetails();
-    checkIfSaved();
-  }, [id]);
-
-  const fetchCampaignDetails = async () => {
-    try {
-      setIsLoading(true);
-      if (!id || id === 'undefined') {
+    const fetchCampaign = async () => {
+      try {
+        setIsLoading(true);
+        if (!id || id === 'undefined') {
+          navigate('/contributor/dashboard');
+          return;
+        }
+        const data = await getCampaignByIdApi(id);
+        setCampaign(data);
+        // Count backers from DB contributions
+        setBackerCount(data.contributions?.length ?? 0);
+        // Fetch live on-chain raised amount
+        await fetchOnChainStats(data);
+      } catch (error) {
+        console.error('Error fetching campaign:', error);
+        toast.error('Failed to load campaign details');
         navigate('/contributor/dashboard');
-        return;
+      } finally {
+        setIsLoading(false);
       }
-      const data = await getCampaignByIdApi(id);
-      setCampaign(data);
-    } catch (error) {
-      console.error('Error fetching campaign:', error);
-      toast.error('Failed to load campaign details');
-      navigate('/contributor/dashboard');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  const checkIfSaved = () => {
+    fetchCampaign();
+
     const saved = JSON.parse(localStorage.getItem('pure_raise_watchlist') || '[]');
     setIsSaved(saved.includes(id));
-  };
+  }, [id, navigate, fetchOnChainStats]);
+
+  const handleContributionSuccess = useCallback(async (txHash: string) => {
+    if (!campaign) return;
+    // Refresh on-chain stats and backer count
+    await fetchOnChainStats(campaign);
+    // Refresh campaign data to get updated contributions list
+    try {
+      const updated = await getCampaignByIdApi(campaign.id || campaign._id!);
+      setCampaign(updated);
+      setBackerCount(updated.contributions?.length ?? 0);
+    } catch {
+      // non-fatal
+    }
+    toast.success(`Transaction confirmed! Tx: ${txHash.slice(0, 10)}…`);
+  }, [campaign, fetchOnChainStats]);
 
   const toggleSave = () => {
     const saved = JSON.parse(localStorage.getItem('pure_raise_watchlist') || '[]');
@@ -68,8 +109,8 @@ const CampaignDetails = () => {
   };
 
   const calculateDaysRemaining = (dateStr: string) => {
-    const end = new Date(dateStr);
-    const now = new Date();
+    const end  = new Date(dateStr);
+    const now  = new Date();
     const diff = end.getTime() - now.getTime();
     const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
     return days > 0 ? days : 0;
@@ -86,21 +127,20 @@ const CampaignDetails = () => {
   if (!campaign) return null;
 
   const daysRemaining = calculateDaysRemaining(campaign.endDate);
-  const progress = 0; // Placeholder
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <style>{`
         body { font-family: 'Times New Roman', Times, serif; }
-        h1, h2, h3, h4, h5, h6, button, span, p.sans-serif { 
-          font-family: 'Inter', sans-serif; 
+        h1, h2, h3, h4, h5, h6, button, span, p.sans-serif {
+          font-family: 'Inter', sans-serif;
           font-weight: 700;
         }
       `}</style>
 
       {/* Sticky Top Header */}
       <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 z-40">
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-slate-400 hover:text-ink transition-colors font-bold text-sm"
         >
@@ -112,23 +152,20 @@ const CampaignDetails = () => {
           <button className="p-2.5 rounded-xl border border-slate-100 text-slate-400 hover:bg-slate-50 transition-all">
             <Share2 size={20} />
           </button>
-          <button 
+          <button
             onClick={toggleSave}
             className={`p-2.5 rounded-xl border transition-all ${
               isSaved ? 'bg-red-50 border-red-100 text-red-500' : 'bg-white border-slate-100 text-slate-400'
             }`}
           >
-            <Heart size={20} fill={isSaved ? "currentColor" : "none"} />
-          </button>
-          <button className="bg-slate-900 text-white px-6 py-2.5 rounded-2xl font-bold text-sm hover:bg-ink transition-all shadow-lg shadow-slate-900/20 uppercase tracking-wider">
-            Connect Wallet
+            <Heart size={20} fill={isSaved ? 'currentColor' : 'none'} />
           </button>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          
+
           {/* Left Column: Media & Info */}
           <div className="lg:col-span-2 space-y-10">
             {/* Main Media */}
@@ -196,7 +233,7 @@ const CampaignDetails = () => {
                   {campaign.milestones.length} Phases
                 </span>
               </div>
-              
+
               <div className="space-y-6 relative before:absolute before:left-6 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
                 {campaign.milestones.map((m: any, idx: number) => (
                   <div key={idx} className="relative pl-14 group">
@@ -204,26 +241,83 @@ const CampaignDetails = () => {
                       <CheckCircle2 size={24} />
                     </div>
                     <div className="p-6 bg-slate-50/50 rounded-3xl border border-transparent group-hover:border-brand-100 group-hover:bg-brand-50/30 transition-all">
-                      <h4 className="text-lg font-bold text-ink mb-1">{m.title}</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-lg font-bold text-ink">{m.title}</h4>
+                        <span className="text-[10px] font-bold text-brand-500 bg-brand-50 px-2 py-1 rounded-full border border-brand-100">
+                          {m.fundPercentage}%
+                        </span>
+                      </div>
                       <p className="text-sm text-slate-500" style={{ fontFamily: '"Times New Roman", Times, serif' }}>{m.description}</p>
+                      {m.expectedCompletionDate && (
+                        <div className="flex items-center gap-1.5 mt-3 text-[10px] font-bold text-slate-400">
+                          <Calendar size={12} />
+                          Target: {new Date(m.expectedCompletionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+
+            {/* Recent Backers */}
+            {campaign.contributions && campaign.contributions.length > 0 && (
+              <div className="bg-white rounded-[40px] p-12 border border-slate-100 shadow-sm space-y-8">
+                <div className="flex items-center gap-3 pb-6 border-b border-slate-50">
+                  <Users className="text-brand-500" size={24} />
+                  <h2 className="text-2xl font-bold text-ink">Recent Backers</h2>
+                  <span className="ml-auto px-4 py-2 bg-slate-50 rounded-2xl text-xs font-bold text-slate-400 border border-slate-100">
+                    {campaign.contributions.length} contributors
+                  </span>
+                </div>
+                <div className="space-y-4">
+                  {campaign.contributions.slice().reverse().slice(0, 8).map((contrib, idx) => (
+                    <div key={idx} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50/50 border border-slate-100 hover:border-brand-100 transition-all">
+                      <div className="w-12 h-12 rounded-2xl bg-brand-100 overflow-hidden shrink-0 flex items-center justify-center text-brand-600 font-bold text-lg">
+                        {contrib.profileImage ? (
+                          <img src={contrib.profileImage} className="w-full h-full object-cover" alt="" />
+                        ) : (
+                          <span>{contrib.name?.charAt(0)}</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-ink">{contrib.name}</p>
+                        <p className="text-[10px] text-slate-400 font-medium">{new Date(contrib.timestamp).toLocaleDateString()}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-bold text-brand-600">+{contrib.amountEth} ETH</p>
+                        <a
+                          href={`https://sepolia.etherscan.io/tx/${contrib.txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] text-slate-400 hover:text-brand-500 flex items-center gap-1 justify-end"
+                        >
+                          <ExternalLink size={10} />
+                          Etherscan
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column: Funding Card */}
           <div className="space-y-8 sticky top-32 h-fit">
             <div className="bg-white rounded-[40px] p-10 border border-slate-100 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-2 bg-brand-500" />
-              
+
               <div className="space-y-8">
                 {/* Funding Stats */}
                 <div className="space-y-6">
                   <div>
                     <div className="flex items-baseline gap-2 mb-2">
-                      <span className="text-5xl font-black text-ink tracking-tighter">0.00</span>
+                      {statsLoading ? (
+                        <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <span className="text-5xl font-black text-ink tracking-tighter">{parseFloat(raisedEth).toFixed(3)}</span>
+                      )}
                       <span className="text-xl font-bold text-brand-600 uppercase tracking-widest">ETH</span>
                     </div>
                     <p className="text-sm text-slate-400 font-bold uppercase tracking-widest" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
@@ -233,11 +327,17 @@ const CampaignDetails = () => {
 
                   <div className="space-y-3">
                     <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                      <div className="h-full bg-brand-500 rounded-full shadow-lg shadow-brand-500/50" style={{ width: '0%' }} />
+                      <div
+                        className="h-full bg-brand-500 rounded-full shadow-lg shadow-brand-500/50 transition-all duration-1000"
+                        style={{ width: `${progress}%` }}
+                      />
                     </div>
                     <div className="flex justify-between text-xs font-bold text-ink">
-                      <span>0% funded</span>
-                      <span className="text-brand-600">0 contributors</span>
+                      <span>{progress.toFixed(1)}% funded</span>
+                      <span className="text-brand-600 flex items-center gap-1">
+                        <Users size={12} />
+                        {backerCount} {backerCount === 1 ? 'backer' : 'backers'}
+                      </span>
                     </div>
                   </div>
 
@@ -255,24 +355,12 @@ const CampaignDetails = () => {
                   </div>
                 </div>
 
-                {/* Contribution Input */}
-                <div className="space-y-4 pt-6 border-t border-slate-100">
-                  <div className="relative group">
-                    <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors" size={20} />
-                    <input 
-                      type="number" 
-                      placeholder="Enter amount in ETH"
-                      value={contributionAmount}
-                      onChange={(e) => setContributionAmount(e.target.value)}
-                      className="w-full bg-slate-50 border-2 border-transparent rounded-[24px] py-4 pl-12 pr-4 text-lg font-bold text-ink focus:border-brand-500 focus:bg-white transition-all outline-none"
-                    />
-                  </div>
-                  <button className="w-full py-5 bg-brand-500 text-white rounded-[24px] font-bold text-lg hover:bg-brand-600 transition-all shadow-xl shadow-brand-500/30 uppercase tracking-widest">
-                    Back This Project
-                  </button>
-                  <p className="text-[10px] text-center text-slate-400 font-medium" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-                    By contributing, you agree to our Terms of Use and Risk Disclosure.
-                  </p>
+                {/* ContributeForm */}
+                <div className="pt-6 border-t border-slate-100">
+                  <ContributeForm
+                    campaignMongoId={campaign._id || campaign.id}
+                    onSuccess={handleContributionSuccess}
+                  />
                 </div>
               </div>
             </div>

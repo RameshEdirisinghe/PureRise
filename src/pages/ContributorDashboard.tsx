@@ -13,11 +13,14 @@ import {
   MoreVertical,
   Clock,
   TrendingUp,
-  X
+  X,
+  ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getActiveCampaignsApi, type CampaignResponse } from '../api/campaign';
+import { getActiveCampaignsApi, getMyContributionsApi, type CampaignResponse, type MyContributionsResponse } from '../api/campaign';
+import { fetchCampaignDetails } from '../services/campaignReadService';
+import { mongoIdToUint256 } from '../utils/formatters';
 import { toast } from 'react-hot-toast';
 import WalletButton from '../components/WalletButton';
 
@@ -52,7 +55,27 @@ const CategoryPill = ({ label, active, onClick }: any) => (
 );
 
 const CampaignCard = ({ campaign, isSaved, onToggleSave, onViewDetails }: any) => {
-  const progress = Math.min(Math.round((0 / campaign.targetFunding) * 100), 100); 
+  const [raisedEth, setRaisedEth] = useState('0.00');
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchStats = async () => {
+      try {
+        const id = mongoIdToUint256(campaign.id || campaign._id);
+        const details = await fetchCampaignDetails(id);
+        if (!mounted) return;
+        const goal = parseFloat(campaign.targetFunding || '0');
+        const raised = parseFloat(details.raised);
+        setRaisedEth(details.raised);
+        setProgress(goal > 0 ? Math.min((raised / goal) * 100, 100) : 0);
+      } catch (err) {
+        // use defaults
+      }
+    };
+    fetchStats();
+    return () => { mounted = false; };
+  }, [campaign.id, campaign._id, campaign.targetFunding]); 
 
   const calculateDaysRemaining = (dateStr: string) => {
     const end = new Date(dateStr);
@@ -137,7 +160,7 @@ const CampaignCard = ({ campaign, isSaved, onToggleSave, onViewDetails }: any) =
           <div className="flex items-center justify-between pt-2">
             <div>
               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Raised</p>
-              <p className="text-sm font-bold text-ink">0.00 <span className="text-[10px] text-brand-500">ETH</span></p>
+              <p className="text-sm font-bold text-ink">{parseFloat(raisedEth).toFixed(3)} <span className="text-[10px] text-brand-500">ETH</span></p>
             </div>
             <div className="text-right">
               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Remaining</p>
@@ -165,6 +188,10 @@ const ContributorDashboard = () => {
   const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // My Donations State
+  const [myDonations, setMyDonations] = useState<MyContributionsResponse | null>(null);
+  const [donationsLoading, setDonationsLoading] = useState(false);
+
   // Settings State
   const [newName, setNewName] = useState(user?.name || '');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -177,6 +204,25 @@ const ContributorDashboard = () => {
     const saved = localStorage.getItem('pure_raise_watchlist');
     if (saved) setSavedCampaigns(JSON.parse(saved));
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'donations') {
+      fetchMyDonations();
+    }
+  }, [activeTab]);
+
+  const fetchMyDonations = async () => {
+    try {
+      setDonationsLoading(true);
+      const data = await getMyContributionsApi();
+      setMyDonations(data);
+    } catch (error) {
+      console.error('Error fetching donations:', error);
+      toast.error('Failed to load donations');
+    } finally {
+      setDonationsLoading(false);
+    }
+  };
 
   const fetchActiveCampaigns = async () => {
     try {
@@ -418,20 +464,87 @@ const ContributorDashboard = () => {
           )}
 
           {activeTab === 'donations' && (
-            <div className="bg-white rounded-[40px] border border-slate-100 p-20 text-center">
-              <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6 text-brand-500">
-                <HandHeart size={40} />
-              </div>
-              <h2 className="text-2xl font-bold text-ink mb-2">No Donations Yet</h2>
-              <p className="text-slate-400 max-w-sm mx-auto" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-                You haven't contributed to any campaigns yet. Start your impact journey today.
-              </p>
-              <button 
-                onClick={() => setActiveTab('overview')}
-                className="mt-8 px-8 py-3 bg-brand-500 text-white rounded-2xl font-bold text-sm"
-              >
-                Explore Campaigns
-              </button>
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <h1 className="text-3xl font-bold text-ink tracking-tight">My Donations</h1>
+              
+              {donationsLoading ? (
+                <div className="bg-white rounded-[40px] border border-slate-100 p-20 flex justify-center">
+                  <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
+                </div>
+              ) : !myDonations || myDonations.contributions.length === 0 ? (
+                <div className="bg-white rounded-[40px] border border-slate-100 p-20 text-center">
+                  <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6 text-brand-500">
+                    <HandHeart size={40} />
+                  </div>
+                  <h2 className="text-2xl font-bold text-ink mb-2">No Donations Yet</h2>
+                  <p className="text-slate-400 max-w-sm mx-auto" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                    You haven't contributed to any campaigns yet. Start your impact journey today.
+                  </p>
+                  <button 
+                    onClick={() => setActiveTab('overview')}
+                    className="mt-8 px-8 py-3 bg-brand-500 text-white rounded-2xl font-bold text-sm"
+                  >
+                    Explore Campaigns
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm flex items-center gap-6">
+                      <div className="w-16 h-16 rounded-2xl bg-brand-50 text-brand-500 flex items-center justify-center">
+                        <TrendingUp size={32} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Impact</p>
+                        <p className="text-3xl font-black text-ink">{myDonations.totalAmountEth} <span className="text-sm text-brand-500">ETH</span></p>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm flex items-center gap-6">
+                      <div className="w-16 h-16 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center">
+                        <HandHeart size={32} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Campaigns Backed</p>
+                        <p className="text-3xl font-black text-ink">{myDonations.totalCampaigns}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-sm">
+                    <div className="p-8 border-b border-slate-100">
+                      <h3 className="font-bold text-ink">Donation History</h3>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {myDonations.contributions.map((donation, idx) => (
+                        <div key={idx} className="p-6 hover:bg-slate-50 transition-colors flex items-center gap-6 group">
+                          <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 shrink-0">
+                            <img src={donation.campaignCoverImage} alt="" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-ink mb-1 cursor-pointer group-hover:text-brand-600 transition-colors" onClick={() => navigate(`/campaign/${donation.campaignId}`)}>
+                              {donation.campaignTitle}
+                            </h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                              {new Date(donation.timestamp).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="font-black text-brand-600 mb-1">{parseFloat(donation.amountEth).toFixed(3)} ETH</p>
+                            <a 
+                              href={`https://sepolia.etherscan.io/tx/${donation.txHash}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-brand-500 flex items-center gap-1 justify-end"
+                            >
+                              View Tx <ExternalLink size={10} />
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 

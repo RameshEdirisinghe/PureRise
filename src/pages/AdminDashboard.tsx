@@ -4,11 +4,13 @@ import {
   ExternalLink, Eye, MoreVertical, Search,
   Filter, Calendar, Mail, User, Info,
   CheckCircle2, X, Megaphone, Milestone,
-  TrendingUp, Clock, AlertCircle
+  TrendingUp, Clock, AlertCircle, LogOut
 } from 'lucide-react';
 import { getPendingRequests, reviewRequest, getSignedUrl, getAllUsers, updateUserStatus } from '../api/admin';
 import { getPendingCampaignsApi, reviewCampaignApi } from '../api/campaign';
 import { getApiError } from '../utils/errorHelper';
+import { toast } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 // --- Types ---
 interface SignedUrls {
@@ -68,6 +70,7 @@ interface Campaign {
 }
 
 const AdminDashboard = () => {
+  const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'kyc' | 'campaigns' | 'users'>('kyc');
   const [userRoleFilter, setUserRoleFilter] = useState<'all' | 'contributor' | 'projectOwner' | 'admin'>('all');
   
@@ -159,7 +162,7 @@ const AdminDashboard = () => {
       if (selectedCampaign) {
         try {
           setLoadingUrls(true);
-          const response = await getSignedUrl(selectedCampaign.coverImage, 'campaign-media');
+          const response = await getSignedUrl(selectedCampaign.coverImage, 'kyc-documents');
           setCampaignSignedUrl(response.data.signedUrl);
         } catch (err) {
           console.error('Failed to fetch campaign signed URL', err);
@@ -192,8 +195,9 @@ const AdminDashboard = () => {
       setRequests(prev => prev.filter(r => r._id !== selectedRequest._id));
       setSelectedRequest(null);
       setReviewNotes('');
+      toast.success(`Identity ${status === 'approved' ? 'approved' : 'rejected'} successfully`);
     } catch (err) {
-      alert(getApiError(err));
+      toast.error(getApiError(err));
     } finally {
       setReviewing(false);
     }
@@ -208,12 +212,14 @@ const AdminDashboard = () => {
       setCampaigns(prev => prev.filter(c => c._id !== selectedCampaign._id));
       setSelectedCampaign(null);
       setReviewNotes('');
+      toast.success(`Campaign ${status === 'active' ? 'approved and launched' : 'rejected'} successfully`);
     } catch (err) {
-      alert(getApiError(err));
+      toast.error(getApiError(err));
     } finally {
       setReviewing(false);
     }
   };
+
   const handleToggleUserBlock = async (userId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
     const action = currentStatus === 'suspended' ? 'unblock' : 'block';
@@ -223,18 +229,15 @@ const AdminDashboard = () => {
     try {
       await updateUserStatus(userId, newStatus);
       setUsers(prev => prev.map(u => u._id === userId ? { ...u, accountStatus: newStatus } : u));
+      toast.success(`User ${action}ed successfully`);
     } catch (err) {
-      alert(getApiError(err));
+      toast.error(getApiError(err));
     }
   };
 
   const getImageUrl = (path: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    // For campaign images, they might be in a different bucket or public URL
-    if (activeTab === 'campaigns') {
-       return `https://oymigkrebvrwygfhtnme.supabase.co/storage/v1/object/public/campaign-media/${path}`;
-    }
     return `https://oymigkrebvrwygfhtnme.supabase.co/storage/v1/object/public/kyc-documents/${path}`;
   };
 
@@ -276,6 +279,16 @@ const AdminDashboard = () => {
             User Management
           </button>
         </nav>
+
+        <div className="absolute bottom-8 left-6 right-6">
+          <button
+            onClick={logout}
+            className="w-full py-3 px-4 rounded-xl border border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-widest hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex items-center justify-center gap-2"
+          >
+            <LogOut size={14} />
+            Logout
+          </button>
+        </div>
       </aside>
 
       {/* Main Content */}
