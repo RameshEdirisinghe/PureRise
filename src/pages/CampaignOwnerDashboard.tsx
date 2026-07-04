@@ -420,7 +420,7 @@ const CampaignOwnerDashboard = () => {
                   <h2 className="text-lg font-bold text-ink">Upcoming Milestones</h2>
                 </div>
 
-                <div className="space-y-8 relative before:absolute before:left-5 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
+                <div className="space-y-8 relative before:absolute before:left-5 before:top-2 before:bottom-2 before:w-px before:bg-slate-100 max-h-[380px] overflow-y-auto pr-2">
                   {allMilestones.length === 0 ? (
                     <div className="text-center py-10 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 ml-5">
                       <Milestone className="mx-auto text-slate-300 mb-2" size={24} />
@@ -428,7 +428,7 @@ const CampaignOwnerDashboard = () => {
                     </div>
                   ) : (
                     allMilestones.map((m: any, idx: number) => (
-                    <div key={idx} className="relative pl-12 group cursor-pointer" onClick={() => navigate(`/campaign-owner/campaign/${m.campaignId}`)}>
+                    <div key={idx} className="relative pl-12 group cursor-pointer mb-6 last:mb-0" onClick={() => navigate(`/campaign-owner/campaign/${m.campaignId}`)}>
                       <div className={`absolute left-0 top-0 w-10 h-10 rounded-xl flex items-center justify-center border-2 border-white shadow-sm bg-slate-100 text-slate-300 group-hover:bg-brand-500 group-hover:text-white transition-colors`}>
                          <Milestone size={18} />
                       </div>

@@ -1,15 +1,38 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, Globe, Activity, Users, Wallet, Target, Rocket, Coins, CheckCircle2,
-  ArrowRight, LayoutDashboard
+  ArrowRight, LayoutDashboard, LogOut
 } from 'lucide-react';
 
 import FeatureCard from '../components/FeatureCard';
 import StepCard from '../components/StepCard';
 import CampaignCard from '../components/CampaignCard';
+import { useAuth } from '../context/AuthContext';
 
 const LandingPage: React.FC = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Helper to determine dashboard url based on user role
+  const getDashboardUrl = () => {
+    if (!user) return '/login';
+    switch (user.role) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'projectOwner':
+        return '/campaign-owner/dashboard';
+      case 'contributor':
+      default:
+        return '/contributor/dashboard';
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-surface font-sans text-ink selection:bg-brand-100 selection:text-brand-700">
       
@@ -27,15 +50,36 @@ const LandingPage: React.FC = () => {
             <li><a href="#" className="text-brand-500 font-medium text-[0.875rem] transition-colors">Home</a></li>
             <li><a href="#campaigns" className="text-ink-muted hover:text-brand-500 font-medium text-[0.875rem] transition-colors">Featured Campaigns</a></li>
             <li><a href="#how-it-works" className="text-ink-muted hover:text-brand-500 font-medium text-[0.875rem] transition-colors">How it Works</a></li>
-            <li><a href="#" className="text-ink-muted hover:text-brand-500 font-medium text-[0.875rem] transition-colors">Portfolios</a></li>
             <li><a href="#" className="text-ink-muted hover:text-brand-500 font-medium text-[0.875rem] transition-colors">About Us</a></li>
           </ul>
 
           <div className="flex items-center gap-4">
-            <Link to="/login" className="text-[0.875rem] font-medium text-ink hover:text-brand-500 transition-colors no-underline">Login</Link>
-            <Link to="/register" className="bg-brand-500 text-white px-[1.4rem] py-[0.6rem] rounded-full text-[0.875rem] font-semibold transition-all hover:bg-brand-600 hover:-translate-y-[1px]">
-              Start a Campaign
-            </Link>
+            {user ? (
+              <>
+                {user.role === 'projectOwner' && (
+                  <Link to="/campaign-owner/create" className="bg-brand-500 text-white px-[1.2rem] py-[0.55rem] rounded-full text-[0.82rem] font-semibold transition-all hover:bg-brand-600 hover:-translate-y-[1px]">
+                    Create Campaign
+                  </Link>
+                )}
+                <Link to={getDashboardUrl()} className="text-[0.875rem] font-medium text-ink hover:text-brand-500 transition-colors no-underline">
+                  Dashboard
+                </Link>
+                <button 
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 text-[0.875rem] font-medium text-ink-muted hover:text-red-500 transition-colors"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-[0.875rem] font-medium text-ink hover:text-brand-500 transition-colors no-underline">Login</Link>
+                <Link to="/register" className="bg-brand-500 text-white px-[1.4rem] py-[0.6rem] rounded-full text-[0.875rem] font-semibold transition-all hover:bg-brand-600 hover:-translate-y-[1px]">
+                  Start a Campaign
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -45,27 +89,7 @@ const LandingPage: React.FC = () => {
         {/* Background Ambient Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-brand-100/40 blur-[120px] rounded-full -z-10"></div>
         
-        <div className="animate-slide-up flex flex-col items-center">
-          <div className="inline-flex items-center gap-[8px] bg-brand-100 text-brand-500 text-[0.75rem] font-bold tracking-[.1em] uppercase px-[1.2rem] py-[0.45rem] rounded-full mb-8 border border-brand-500/20 shadow-sm shadow-brand-500/5">
-            <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
-            Transforming Global Impact
-          </div>
-          <h1 className="font-display text-[clamp(2.8rem,6vw,4.5rem)] font-[800] leading-[1.05] mb-8 text-ink tracking-[-.03em] max-w-[900px]">
-            Transparent Crowdfunding<br />
-            <span className="text-brand-500 font-[400]">Powered by Blockchain</span>
-          </h1>
-          <p className="text-[1.15rem] text-ink-muted leading-[1.8] mb-12 max-w-[640px]">
-            PureRaise empowers innovators and communities to fund their projects globally, transparently, and securely using smart contracts and decentralized protocols.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center gap-5 justify-center">
-            <Link to="/register" className="bg-brand-500 text-white px-10 py-[1rem] rounded-full text-[1rem] font-bold flex items-center gap-2 transition-all hover:bg-brand-600 hover:-translate-y-[2px] shadow-lg shadow-brand-500/25">
-              Start a campaign
-            </Link>
-            <a href="#campaigns" className="bg-white border border-surface-muted text-ink px-[1.8rem] py-[0.95rem] rounded-full text-[1rem] font-semibold flex items-center gap-2 transition-all hover:border-brand-500 hover:text-brand-500 hover:shadow-md">
-              Explore projects
-              <ArrowRight size={18} />
-            </a>
-          </div>
+
           
           <div className="mt-16 flex flex-col items-center gap-4">
             <div className="text-ink text-center">

@@ -485,10 +485,9 @@ const CampaignOwnerDetailedView = () => {
               </div>
             )}
 
-            {/* ── BACKERS TAB ── */}
             {activeTab === 'backers' && (
               <div>
-                {contributions.length === 0 ? (
+                {!campaign.contributions || campaign.contributions.length === 0 ? (
                   <div className="text-center py-16 space-y-3">
                     <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mx-auto text-slate-300">
                       <Users size={28} />
@@ -501,35 +500,41 @@ const CampaignOwnerDetailedView = () => {
                     {/* Summary row */}
                     <div className="flex items-center justify-between p-4 bg-brand-50 rounded-2xl border border-brand-100 mb-5">
                       <div className="flex items-center gap-2 text-sm font-bold text-brand-700">
-                        <Users size={16} /> {contributions.length} backers
+                        <Users size={16} /> {campaign.contributions.length} backers
                       </div>
                       <p className="text-sm font-black text-brand-600">
-                        {contributions.reduce((s, c) => s + parseFloat(c.amount), 0).toFixed(4)} ETH total
+                        {campaign.contributions.reduce((s, c) => s + parseFloat(c.amountEth), 0).toFixed(4)} ETH total
                       </p>
                     </div>
 
-                    {contributions.map((c, i) => (
+                    {campaign.contributions.map((c, i) => (
                       <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-brand-100 hover:bg-brand-50/30 transition-all group">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center text-brand-600 font-black text-sm flex-shrink-0">
-                            {i + 1}
+                          <div className="w-10 h-10 rounded-full bg-brand-50 border border-slate-200 flex items-center justify-center text-brand-500 overflow-hidden shadow-sm flex-shrink-0">
+                            {c.profileImage ? (
+                              <img src={c.profileImage} className="w-full h-full object-cover" alt="" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-brand-100 text-brand-600 font-bold">
+                                {c.name?.charAt(0)}
+                              </div>
+                            )}
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Wallet</p>
+                            <p className="text-sm font-bold text-ink">{c.name}</p>
                             <a
-                              href={`https://sepolia.etherscan.io/address/${c.contributor}`}
+                              href={`https://sepolia.etherscan.io/address/${c.walletAddress}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-xs font-mono text-slate-700 hover:text-brand-500 transition-colors flex items-center gap-1"
+                              className="text-[10px] font-mono text-slate-400 hover:text-brand-500 transition-colors flex items-center gap-1"
                             >
-                              {c.contributor.slice(0, 8)}…{c.contributor.slice(-6)}
+                              {c.walletAddress.slice(0, 8)}…{c.walletAddress.slice(-6)}
                               <ExternalLink size={10} />
                             </a>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-base font-black text-emerald-600">+{c.amount} ETH</p>
-                          <p className="text-[10px] text-slate-400 font-medium">Block #{c.blockNumber}</p>
+                          <p className="text-base font-black text-emerald-600">+{c.amountEth} ETH</p>
+                          <p className="text-[10px] text-slate-400 font-medium">{new Date(c.timestamp).toLocaleDateString()}</p>
                         </div>
                       </div>
                     ))}
