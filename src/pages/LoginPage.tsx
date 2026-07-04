@@ -1,7 +1,6 @@
 import LoginForm from '../components/LoginForm';
 import { Link } from 'react-router-dom';
 import crowdfundingImg from '../assets/crowdfunding.jpg';
-import WalletButton from '../components/WalletButton';
 
 const BrandPanel = () => (
   <div className="relative w-full h-full overflow-hidden bg-ink">
@@ -50,18 +49,6 @@ const LoginPage = () => (
         <div className="max-w-[380px] w-full mx-auto">
           <LoginForm />
 
-          {/* ── Wallet Connection ─────────────────────────── */}
-          <div className="mt-8 pt-8 border-t border-slate-100">
-            <p className="text-[0.7rem] font-bold text-ink-muted uppercase tracking-widest mb-4">
-              Blockchain Access
-            </p>
-            <WalletButton />
-            <p className="mt-3 text-[0.65rem] text-ink-faint leading-relaxed">
-              Connect your MetaMask wallet to donate, create campaigns,
-              and interact with the Sepolia smart contract.
-            </p>
-          </div>
-          
           <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between gap-4">
             <div className="text-[0.75rem] text-ink-muted font-bold uppercase tracking-widest leading-none">
               New here?
