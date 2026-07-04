@@ -87,15 +87,60 @@ const LandingPage: React.FC = () => {
       {/* HERO */}
       <section className="pt-[120px] pb-[140px] px-8 max-w-[1000px] mx-auto flex flex-col items-center text-center relative overflow-hidden">
         {/* Background Ambient Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-brand-100/40 blur-[120px] rounded-full -z-10"></div>
-        
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-brand-100/40 blur-[140px] rounded-full -z-10 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-brand-200/20 blur-[100px] rounded-full -z-10 pointer-events-none"></div>
 
-          
-          <div className="mt-16 flex flex-col items-center gap-4">
-            <div className="text-ink text-center">
-              <div className="font-bold text-[1rem]">Join 10,000+ Backers</div>
-              <div className="text-[0.82rem] text-ink-muted">Trusted by innovators and contributors worldwide</div>
-            </div>
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 bg-brand-50 border border-brand-200 text-brand-600 text-[0.78rem] font-semibold px-4 py-[0.4rem] rounded-full mb-7 shadow-sm">
+          <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+          Blockchain-Powered Crowdfunding
+        </div>
+
+        {/* Headline */}
+        <h1 className="font-display font-extrabold text-[clamp(2.4rem,5.5vw,4rem)] leading-[1.1] tracking-[-0.03em] text-ink mb-6 max-w-[850px]">
+          Fund Your Vision.<br />
+          <span className="text-brand-500">Transparently. Trustlessly.</span>
+        </h1>
+
+        {/* Sub-headline */}
+        <p className="text-ink-muted text-[clamp(1rem,1.8vw,1.15rem)] leading-[1.75] max-w-[640px] mb-10">
+          PureRaise is a decentralized crowdfunding platform where creators launch campaigns and backers fund milestones — all secured by smart contracts on the blockchain. <strong className="text-ink font-semibold">No middlemen. No hidden fees. No trust required.</strong>
+        </p>
+
+        {/* CTAs */}
+        <div className="flex flex-wrap justify-center gap-4 mb-14">
+          <Link
+            to="/register"
+            className="bg-brand-500 text-white px-8 py-[0.9rem] rounded-full font-display font-bold text-[0.95rem] shadow-lg shadow-brand-500/30 transition-all hover:bg-brand-600 hover:-translate-y-[2px] hover:shadow-brand-500/50 flex items-center gap-2"
+          >
+            <Rocket size={17} />
+            Start a Campaign
+          </Link>
+          <a
+            href="#campaigns"
+            className="bg-white border border-surface-muted text-ink px-8 py-[0.9rem] rounded-full font-semibold text-[0.95rem] shadow-sm transition-all hover:-translate-y-[1px] hover:border-brand-300 flex items-center gap-2"
+          >
+            Explore Projects <ArrowRight size={16} />
+          </a>
+        </div>
+
+        {/* Trust Strip */}
+        <div className="flex flex-wrap justify-center gap-6 text-ink-muted text-[0.82rem]">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={16} className="text-green-500" />
+            <span>Audited Smart Contracts</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Globe size={16} className="text-brand-500" />
+            <span>Global & Borderless</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Coins size={16} className="text-brand-500" />
+            <span>Crypto-Native Payments</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Users size={16} className="text-brand-500" />
+            <span>10,000+ Backers Worldwide</span>
           </div>
         </div>
       </section>
