@@ -282,7 +282,7 @@ const ContributorDashboard = () => {
     }
   };
 
-  const categories = ['All', 'Education', 'Healthcare', 'Environment', 'Community', 'Startup', 'Technology'];
+  const categories = ['All', 'Startup', 'Medical', 'Education', 'Social', 'Technology', 'Personal'];
 
   const handleProfileUpdate = async () => {
     try {
