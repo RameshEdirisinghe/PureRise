@@ -55,6 +55,7 @@ interface Campaign {
   coverImage: string;
   targetFunding: number;
   endDate: string;
+  proposalPdf?: string | null;
   ownerId: {
     _id: string;
     name: string;
@@ -158,22 +159,11 @@ const AdminDashboard = () => {
   }, [selectedRequest]);
 
   useEffect(() => {
-    const fetchCampaignUrl = async () => {
-      if (selectedCampaign) {
-        try {
-          setLoadingUrls(true);
-          const response = await getSignedUrl(selectedCampaign.coverImage, 'kyc-documents');
-          setCampaignSignedUrl(response.data.signedUrl);
-        } catch (err) {
-          console.error('Failed to fetch campaign signed URL', err);
-        } finally {
-          setLoadingUrls(false);
-        }
-      } else {
-        setCampaignSignedUrl('');
-      }
-    };
-    fetchCampaignUrl();
+    if (selectedCampaign) {
+      setCampaignSignedUrl(selectedCampaign.coverImage);
+    } else {
+      setCampaignSignedUrl('');
+    }
   }, [selectedCampaign]);
 
   useEffect(() => {
@@ -195,7 +185,11 @@ const AdminDashboard = () => {
       setRequests(prev => prev.filter(r => r._id !== selectedRequest._id));
       setSelectedRequest(null);
       setReviewNotes('');
-      toast.success(`Identity ${status === 'approved' ? 'approved' : 'rejected'} successfully`);
+      toast.success(
+        status === 'approved'
+          ? 'Campaign owner approved successfully. Email notification sent ✅'
+          : 'Application rejected. Email notification sent.'
+      );
     } catch (err) {
       toast.error(getApiError(err));
     } finally {
@@ -212,7 +206,11 @@ const AdminDashboard = () => {
       setCampaigns(prev => prev.filter(c => c._id !== selectedCampaign._id));
       setSelectedCampaign(null);
       setReviewNotes('');
-      toast.success(`Campaign ${status === 'active' ? 'approved and launched' : 'rejected'} successfully`);
+      toast.success(
+        status === 'active'
+          ? 'Campaign approved and launched successfully. Email notification sent ✅'
+          : 'Campaign rejected. Email notification sent.'
+      );
     } catch (err) {
       toast.error(getApiError(err));
     } finally {
@@ -689,7 +687,7 @@ const AdminDashboard = () => {
                 {/* Left: Content */}
                 <div className="lg:col-span-2 space-y-8">
                   <div className="aspect-video bg-white rounded-[32px] overflow-hidden border border-slate-100 shadow-sm relative">
-                    {loadingUrls ? (
+                    {false ? (
                       <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
                         <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
                       </div>
@@ -726,6 +724,28 @@ const AdminDashboard = () => {
                       ))}
                     </div>
                   </div>
+
+                  {/* Project Proposal PDF — if attached */}
+                  {selectedCampaign.proposalPdf && (
+                    <div className="bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-[16px] bg-brand-50 flex items-center justify-center text-2xl shrink-0">
+                        📄
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest mb-1">Project Proposal</p>
+                        <h3 className="text-sm font-bold text-ink">View official proposal document</h3>
+                      </div>
+                      <a
+                        href={selectedCampaign.proposalPdf}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download="Project-Proposal.pdf"
+                        className="px-4 py-2 bg-brand-50 text-brand-600 hover:bg-brand-500 hover:text-white text-xs font-bold rounded-xl transition-colors shrink-0"
+                      >
+                        Download PDF
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right: Info & Review */}

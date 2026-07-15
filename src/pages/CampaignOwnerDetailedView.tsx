@@ -347,6 +347,31 @@ const CampaignOwnerDetailedView = () => {
           <p className="text-slate-600 leading-[1.9] text-[15px] whitespace-pre-line">{campaign.goalDescription}</p>
         </div>
 
+        {/* ──────────── PROPOSAL PDF ──────────── */}
+        {campaign.proposalPdf && (
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-6">
+            <div className="w-16 h-16 rounded-[20px] bg-brand-50 border border-brand-100 flex items-center justify-center text-3xl shrink-0">
+              📄
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest mb-1">Project Proposal</p>
+              <h3 className="text-lg font-bold text-ink">View the official project proposal document</h3>
+              <p className="text-sm text-slate-400 mt-0.5">
+                The document you attached during campaign creation.
+              </p>
+            </div>
+            <a
+              href={campaign.proposalPdf}
+              target="_blank"
+              rel="noopener noreferrer"
+              download="Project-Proposal.pdf"
+              className="flex items-center gap-2 px-6 py-3 bg-brand-50 text-brand-600 hover:bg-brand-500 hover:text-white text-sm font-bold rounded-2xl transition-all shrink-0"
+            >
+              Download PDF
+            </a>
+          </div>
+        )}
+
         {/* ──────────── TABS ──────────── */}
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
           {/* Tab bar */}

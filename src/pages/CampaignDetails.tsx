@@ -242,6 +242,32 @@ const CampaignDetails = () => {
               </div>
             </div>
 
+            {/* Project Proposal PDF — shown only if campaign owner attached one */}
+            {campaign.proposalPdf && (
+              <div className="bg-white rounded-[40px] p-10 border border-slate-100 shadow-sm flex items-center gap-6">
+                <div className="w-16 h-16 rounded-[20px] bg-brand-50 border border-brand-100 flex items-center justify-center text-3xl shrink-0">
+                  📄
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest mb-1">Project Proposal</p>
+                  <h3 className="text-lg font-bold text-ink">View the official project proposal document</h3>
+                  <p className="text-sm text-slate-400 mt-0.5" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+                    Submitted by the campaign owner — includes detailed plans, budgets, and goals.
+                  </p>
+                </div>
+                <a
+                  href={campaign.proposalPdf}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download="Project-Proposal.pdf"
+                  className="flex items-center gap-2 px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold rounded-2xl transition-all shadow-lg shadow-brand-500/20 shrink-0"
+                >
+                  <ExternalLink size={16} />
+                  Download PDF
+                </a>
+              </div>
+            )}
+
             {/* Milestones */}
             <div className="bg-white rounded-[40px] p-12 border border-slate-100 shadow-sm space-y-8">
               <div className="flex items-center justify-between">

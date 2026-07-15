@@ -19,6 +19,7 @@ export interface CreateCampaignPayload {
   coverImage: string;
   goalDescription: string;
   milestones: IMilestone[];
+  proposalPdf?: string;   // optional Supabase path for project proposal PDF
 }
 
 export interface CampaignContribution {
@@ -56,6 +57,7 @@ export interface CampaignResponse {
   contributions?: CampaignContribution[];
   withdrawals?: CampaignWithdrawal[];
   contributorCount?: number;
+  proposalPdf?: string | null;  // signed URL for project proposal PDF (contributor download)
   owner?: {
     name: string;
     email: string;
@@ -140,6 +142,27 @@ See: BACKEND_CONNECTION_TROUBLESHOOT.md
     console.error('Campaign API Error:', error);
     throw error;
   }
+};
+
+/**
+ * Upload a project proposal PDF for a campaign
+ *
+ * @param file PDF file to upload
+ * @returns Object containing the Supabase file path
+ */
+export const uploadProposalPdfApi = async (
+  file: File
+): Promise<{ filePath: string }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const { data } = await api.post<{
+    success: boolean;
+    message: string;
+    data: { filePath: string };
+  }>('/campaigns/proposal-upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data.data;
 };
 
 /**

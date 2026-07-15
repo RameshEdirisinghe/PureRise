@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { createCampaignApi, uploadCampaignMediaApi } from '../api/campaign';
+import { createCampaignApi, uploadCampaignMediaApi, uploadProposalPdfApi } from '../api/campaign';
 import { getApiError } from '../context/AuthContext';
 import WalletButton from '../components/WalletButton';
 import { useWallet } from '../context/WalletContext';
@@ -101,6 +101,9 @@ const CreateCampaign = () => {
     endDate: '',
     coverImage: '' // Stores the path from Supabase
   });
+  const [proposalPdf, setProposalPdf] = useState('');         // Supabase path for project proposal PDF
+  const [pdfFileName, setPdfFileName] = useState('');          // display name
+  const [pdfUploading, setPdfUploading] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,6 +129,26 @@ const CreateCampaign = () => {
       setImagePreview(null);
     } finally {
       setUploadLoading(false);
+    }
+  };
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      setError('Only PDF files are accepted for the project proposal.');
+      return;
+    }
+    try {
+      setError('');
+      setPdfUploading(true);
+      const result = await uploadProposalPdfApi(file);
+      setProposalPdf(result.filePath);
+      setPdfFileName(file.name);
+    } catch (err: any) {
+      setError(getApiError(err) || 'Failed to upload proposal PDF.');
+    } finally {
+      setPdfUploading(false);
     }
   };
 
@@ -190,10 +213,11 @@ const CreateCampaign = () => {
         coverImage: formData.coverImage,
         targetFunding: Number(formData.fundingGoal),
         endDate: formData.endDate,
-        goalDescription: formData.description.slice(0, 1000), // Ensure it stays within 1000 char limit
+        goalDescription: formData.description.slice(0, 1000),
+        proposalPdf: proposalPdf || undefined,
         milestones: milestones.map(m => ({
           title: m.title,
-          description: m.description || m.title, // Fallback to title if description empty
+          description: m.description || m.title,
           percentage: Number(m.percentage)
         }))
       });
@@ -394,6 +418,57 @@ const CreateCampaign = () => {
                       </>
                     )}
                   </label>
+                </div>
+
+                {/* Project Proposal PDF Upload */}
+                <div>
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block mb-2 font-sans">
+                    Project Proposal PDF <span className="text-slate-300 normal-case font-medium">(Optional)</span>
+                  </label>
+
+                  {proposalPdf ? (
+                    <div className="flex items-center gap-4 p-4 bg-green-50 border border-green-200 rounded-2xl">
+                      <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
+                        <span className="text-xl">📄</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-bold text-green-700 uppercase tracking-widest">PDF Uploaded ✓</p>
+                        <p className="text-sm text-green-800 font-medium truncate mt-0.5">{pdfFileName}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setProposalPdf(''); setPdfFileName(''); }}
+                        className="text-xs text-red-500 hover:text-red-700 font-bold uppercase tracking-widest shrink-0"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex items-center gap-5 hover:border-brand-500 hover:bg-brand-50/20 transition-all cursor-pointer group">
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="application/pdf"
+                        onChange={handlePdfUpload}
+                        disabled={pdfUploading}
+                      />
+                      <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center group-hover:bg-brand-100 transition-colors shrink-0">
+                        {pdfUploading ? (
+                          <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <span className="text-2xl">📎</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-ink font-sans">
+                          {pdfUploading ? 'Uploading PDF to Supabase...' : 'Attach Project Proposal'}
+                        </p>
+                        <p className="text-[11px] text-slate-400 font-sans mt-0.5">
+                          PDF only · Contributors can view &amp; download this document
+                        </p>
+                      </div>
+                    </label>
+                  )}
                 </div>
               </div>
             )}
