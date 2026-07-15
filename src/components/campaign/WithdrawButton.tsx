@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useWallet } from '../../context/WalletContext';
 import { withdrawCampaignFunds } from '../../services/campaignContractService';
 import { mongoIdToUint256 } from '../../utils/formatters';
+import { recordWithdrawalApi } from '../../api/campaign';
 
 interface WithdrawButtonProps {
   campaignMongoId: string;
@@ -101,6 +102,11 @@ const WithdrawButton: React.FC<WithdrawButtonProps> = ({
         toast.success(`Withdrew ${amount} ETH! Tx: ${result.txHash.slice(0, 10)}…`, {
           id:       toastId,
           duration: 6000,
+        });
+        // Persist the withdrawal to MongoDB so it shows in dashboard/history
+        await recordWithdrawalApi(campaignMongoId, {
+          amountEth: amount,
+          txHash:    result.txHash,
         });
         setAmount('');
         onSuccess?.(result.txHash);

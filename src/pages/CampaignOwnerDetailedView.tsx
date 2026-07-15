@@ -21,13 +21,9 @@ import {
   BarChart3,
   Info,
 } from 'lucide-react';
-import { getCampaignByIdApi, type CampaignResponse } from '../api/campaign';
+import { getCampaignByIdApi, type CampaignResponse, type CampaignWithdrawal } from '../api/campaign';
 import {
   fetchCampaignDetails,
-  fetchCampaignContributions,
-  fetchCampaignWithdrawals,
-  type ContributionEvent,
-  type WithdrawalEvent,
   type CampaignDetails,
 } from '../services/campaignReadService';
 import WithdrawButton from '../components/campaign/WithdrawButton';
@@ -152,10 +148,8 @@ const CampaignOwnerDetailedView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [campaign, setCampaign]         = useState<CampaignResponse | null>(null);
+  const [campaign, setCampaign]             = useState<CampaignResponse | null>(null);
   const [onChainDetails, setOnChainDetails] = useState<CampaignDetails | null>(null);
-  const [contributions, setContributions]   = useState<ContributionEvent[]>([]);
-  const [withdrawals, setWithdrawals]       = useState<WithdrawalEvent[]>([]);
   const [isLoading, setIsLoading]           = useState(true);
   const [isLaunching, setIsLaunching]       = useState(false);
   const [activeTab, setActiveTab]           = useState<'milestones' | 'backers' | 'withdrawals'>('milestones');
@@ -167,17 +161,12 @@ const CampaignOwnerDetailedView = () => {
       const data = await getCampaignByIdApi(campaignId);
       setCampaign(data);
 
+      // Fetch on-chain stats (read-only, non-blocking)
       const uintId = mongoIdToUint256(campaignId);
-      // Non-blocking: fetch blockchain data concurrently, don't crash if unavailable
-      const [chainDetails, contribs, wdraws] = await Promise.allSettled([
+      const chainResult = await Promise.allSettled([
         fetchCampaignDetails(uintId),
-        fetchCampaignContributions(uintId),
-        fetchCampaignWithdrawals(uintId),
       ]);
-
-      if (chainDetails.status === 'fulfilled') setOnChainDetails(chainDetails.value);
-      if (contribs.status === 'fulfilled')     setContributions(contribs.value);
-      if (wdraws.status === 'fulfilled')        setWithdrawals(wdraws.value);
+      if (chainResult[0].status === 'fulfilled') setOnChainDetails(chainResult[0].value);
     } catch {
       toast.error('Failed to load campaign details');
       navigate('/campaign-owner/dashboard');
@@ -248,10 +237,13 @@ const CampaignOwnerDetailedView = () => {
     draft:            'bg-slate-50 text-slate-400 border-slate-100',
   };
 
+  // Use DB withdrawals (reliable) — recorded by recordWithdrawalApi after each tx
+  const dbWithdrawals: CampaignWithdrawal[] = campaign?.withdrawals || [];
+
   const TABS = [
-    { key: 'milestones',  label: 'Milestones',     count: campaign.milestones?.length ?? 0 },
-    { key: 'backers',     label: 'Who Funded',      count: contributions.length },
-    { key: 'withdrawals', label: 'Withdrawals',     count: withdrawals.length },
+    { key: 'milestones',  label: 'Milestones',  count: campaign.milestones?.length ?? 0 },
+    { key: 'backers',     label: 'Who Funded',   count: campaign.contributions?.length ?? 0 },
+    { key: 'withdrawals', label: 'Withdrawals',  count: dbWithdrawals.length },
   ] as const;
 
   return (
@@ -546,7 +538,7 @@ const CampaignOwnerDetailedView = () => {
             {/* ── WITHDRAWALS TAB ── */}
             {activeTab === 'withdrawals' && (
               <div>
-                {withdrawals.length === 0 ? (
+                {dbWithdrawals.length === 0 ? (
                   <div className="text-center py-16 space-y-3">
                     <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mx-auto text-slate-300">
                       <Wallet size={28} />
@@ -558,13 +550,13 @@ const CampaignOwnerDetailedView = () => {
                   <div className="space-y-3">
                     {/* Summary */}
                     <div className="flex items-center justify-between p-4 bg-red-50 rounded-2xl border border-red-100 mb-5">
-                      <p className="text-sm font-bold text-red-700">{withdrawals.length} withdrawal{withdrawals.length > 1 ? 's' : ''}</p>
+                      <p className="text-sm font-bold text-red-700">{dbWithdrawals.length} withdrawal{dbWithdrawals.length > 1 ? 's' : ''}</p>
                       <p className="text-sm font-black text-red-600">
-                        −{withdrawals.reduce((s, w) => s + parseFloat(w.amount), 0).toFixed(4)} ETH total
+                        −{dbWithdrawals.reduce((s, w) => s + parseFloat(w.amountEth), 0).toFixed(4)} ETH total
                       </p>
                     </div>
 
-                    {withdrawals.map((w, i) => (
+                    {dbWithdrawals.slice().reverse().map((w, i) => (
                       <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-red-100 transition-all">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center text-red-400 flex-shrink-0">
@@ -581,11 +573,12 @@ const CampaignOwnerDetailedView = () => {
                               {w.txHash.slice(0, 18)}…
                               <ExternalLink size={10} />
                             </a>
+                            <p className="text-[10px] text-slate-400 font-medium">{new Date(w.timestamp).toLocaleDateString()}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-base font-black text-red-500">−{w.amount} ETH</p>
-                          <p className="text-[10px] text-slate-400 font-medium">Block #{w.blockNumber}</p>
+                          <p className="text-base font-black text-red-500">−{w.amountEth} ETH</p>
+                          {w.blockNumber && <p className="text-[10px] text-slate-400 font-medium">Block #{w.blockNumber}</p>}
                         </div>
                       </div>
                     ))}

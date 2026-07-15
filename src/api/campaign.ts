@@ -31,6 +31,13 @@ export interface CampaignContribution {
   timestamp: string;
 }
 
+export interface CampaignWithdrawal {
+  amountEth: string;
+  txHash: string;
+  blockNumber?: number;
+  timestamp: string;
+}
+
 export interface CampaignResponse {
   id: string;
   _id?: string;           // raw Mongo _id (returned by backend alongside 'id')
@@ -47,6 +54,7 @@ export interface CampaignResponse {
   milestones: any[];
   media?: string[];
   contributions?: CampaignContribution[];
+  withdrawals?: CampaignWithdrawal[];
   contributorCount?: number;
   owner?: {
     name: string;
@@ -54,6 +62,7 @@ export interface CampaignResponse {
     profileImage?: string;
   };
 }
+
 
 /**
  * Create a new campaign
@@ -264,3 +273,20 @@ export const getMyContributionsApi = async (): Promise<MyContributionsResponse> 
     throw error;
   }
 };
+
+/**
+ * Record a confirmed on-chain withdrawal to MongoDB.
+ * Call this immediately after withdrawFunds tx.wait() resolves successfully.
+ * Non-fatal: if this fails, the withdrawal is still on-chain.
+ */
+export const recordWithdrawalApi = async (
+  campaignId: string,
+  payload: { amountEth: string; txHash: string; blockNumber?: number }
+): Promise<void> => {
+  try {
+    await api.post(`/campaigns/${campaignId}/withdrawal`, payload);
+  } catch (error) {
+    console.error('Failed to record withdrawal in DB:', error);
+  }
+};
+
