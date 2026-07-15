@@ -14,15 +14,22 @@ import {
   CheckCircle2,
   ExternalLink,
 } from 'lucide-react';
-import { getCampaignByIdApi, type CampaignResponse } from '../api/campaign';
 import { toast } from 'react-hot-toast';
+import { 
+  getCampaignByIdApi, 
+  getSavedCampaignsApi,
+  toggleSavedCampaignApi,
+  type CampaignResponse 
+} from '../api/campaign';
 import { fetchCampaignDetails } from '../services/campaignReadService';
 import { mongoIdToUint256 } from '../utils/formatters';
 import ContributeForm from '../components/campaign/ContributeForm';
+import { useAuth } from '../context/AuthContext';
 
 const CampaignDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [campaign, setCampaign]   = useState<CampaignResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaved, setIsSaved]     = useState(false);
@@ -76,9 +83,12 @@ const CampaignDetails = () => {
 
     fetchCampaign();
 
-    const saved = JSON.parse(localStorage.getItem('pure_raise_watchlist') || '[]');
-    setIsSaved(saved.includes(id));
-  }, [id, navigate, fetchOnChainStats]);
+    if (user?.id) {
+      getSavedCampaignsApi()
+        .then((saved) => setIsSaved(saved.includes(id as string)))
+        .catch(err => console.error('Failed to load saved campaigns', err));
+    }
+  }, [id, navigate, fetchOnChainStats, user?.id]);
 
   const handleContributionSuccess = useCallback(async (txHash: string) => {
     if (!campaign) return;
@@ -95,17 +105,27 @@ const CampaignDetails = () => {
     toast.success(`Transaction confirmed! Tx: ${txHash.slice(0, 10)}…`);
   }, [campaign, fetchOnChainStats]);
 
-  const toggleSave = () => {
-    const saved = JSON.parse(localStorage.getItem('pure_raise_watchlist') || '[]');
-    let newSaved;
-    if (isSaved) {
-      newSaved = saved.filter((sId: string) => sId !== id);
-    } else {
-      newSaved = [...saved, id];
-      toast.success('Project Saved!', { icon: '❤️' });
+  const toggleSave = async () => {
+    if (!user) {
+      toast.error('Please login to save campaigns');
+      return;
     }
-    localStorage.setItem('pure_raise_watchlist', JSON.stringify(newSaved));
-    setIsSaved(!isSaved);
+
+    try {
+      // Optimistic update
+      setIsSaved(!isSaved);
+      
+      if (!isSaved) {
+        toast.success('Project Saved!', { icon: '❤️' });
+      }
+
+      // API call to persist
+      const updatedSaved = await toggleSavedCampaignApi(id as string);
+      setIsSaved(updatedSaved.includes(id as string));
+    } catch (error) {
+      toast.error('Failed to update saved status');
+      setIsSaved(isSaved); // revert
+    }
   };
 
   const calculateDaysRemaining = (dateStr: string) => {

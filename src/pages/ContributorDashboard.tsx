@@ -18,7 +18,14 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getActiveCampaignsApi, getMyContributionsApi, type CampaignResponse, type MyContributionsResponse } from '../api/campaign';
+import { 
+  getActiveCampaignsApi, 
+  getMyContributionsApi, 
+  getSavedCampaignsApi, 
+  toggleSavedCampaignApi, 
+  type CampaignResponse, 
+  type MyContributionsResponse 
+} from '../api/campaign';
 import { fetchCampaignDetails } from '../services/campaignReadService';
 import { mongoIdToUint256 } from '../utils/formatters';
 import { toast } from 'react-hot-toast';
@@ -200,10 +207,12 @@ const ContributorDashboard = () => {
 
   useEffect(() => {
     fetchActiveCampaigns();
-    // Load saved campaigns from local storage
-    const saved = localStorage.getItem('pure_raise_watchlist');
-    if (saved) setSavedCampaigns(JSON.parse(saved));
-  }, []);
+    if (user?.id) {
+      getSavedCampaignsApi()
+        .then((saved) => setSavedCampaigns(saved))
+        .catch((err) => console.error('Failed to load saved campaigns', err));
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (activeTab === 'donations') {
@@ -237,26 +246,40 @@ const ContributorDashboard = () => {
     }
   };
 
-  const toggleSaveCampaign = (id: string) => {
-    const isSaved = savedCampaigns.includes(id);
-    let newSaved;
-    if (isSaved) {
-      newSaved = savedCampaigns.filter(sId => sId !== id);
-    } else {
-      newSaved = [...savedCampaigns, id];
-      toast.success('Project Saved!', {
-        icon: '❤️',
-        style: {
-          borderRadius: '16px',
-          background: '#333',
-          color: '#fff',
-          fontWeight: 'bold',
-          fontSize: '12px'
-        },
-      });
+  const toggleSaveCampaign = async (id: string) => {
+    if (!user) {
+      toast.error('Please login to save campaigns');
+      return;
     }
-    setSavedCampaigns(newSaved);
-    localStorage.setItem('pure_raise_watchlist', JSON.stringify(newSaved));
+    const isSaved = savedCampaigns.includes(id);
+
+    try {
+      // Optimistic update
+      setSavedCampaigns(prev =>
+        isSaved ? prev.filter(sId => sId !== id) : [...prev, id]
+      );
+
+      if (!isSaved) {
+        toast.success('Project Saved!', {
+          icon: '❤️',
+          style: {
+            borderRadius: '16px',
+            background: '#333',
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: '12px'
+          },
+        });
+      }
+
+      // API call to persist
+      const updatedSaved = await toggleSavedCampaignApi(id);
+      setSavedCampaigns(updatedSaved);
+    } catch (error) {
+      // Revert on error
+      toast.error('Failed to update saved status');
+      getSavedCampaignsApi().then(setSavedCampaigns);
+    }
   };
 
   const categories = ['All', 'Education', 'Healthcare', 'Environment', 'Community', 'Startup', 'Technology'];

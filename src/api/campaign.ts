@@ -290,3 +290,36 @@ export const recordWithdrawalApi = async (
   }
 };
 
+/**
+ * Get all saved campaign IDs for the authenticated contributor
+ */
+export const getSavedCampaignsApi = async (): Promise<string[]> => {
+  try {
+    const { data } = await api.get<{
+      success: boolean;
+      message: string;
+      data: string[];
+    }>('/campaigns/saved-campaigns');
+    return data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Toggle the saved status of a campaign for the authenticated contributor
+ */
+export const toggleSavedCampaignApi = async (campaignId: string): Promise<string[]> => {
+  try {
+    const { data } = await api.post<{
+      success: boolean;
+      message: string;
+      data: string[];
+    }>(`/campaigns/${campaignId}/save`);
+    return data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
