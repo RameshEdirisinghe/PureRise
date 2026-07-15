@@ -456,7 +456,7 @@ const CampaignOwnerDetailedView = () => {
                                 Available: <span className="text-brand-600">{availableForMilestone} ETH</span>
                               </p>
                             </div>
-                            {onChainDetails && parseFloat(availableForMilestone) > 0 ? (
+                            {onChainDetails ? (
                               <div className="bg-white rounded-2xl p-4 border border-slate-100">
                                 <WithdrawButton
                                   campaignMongoId={campaign._id ?? id!}
@@ -468,7 +468,7 @@ const CampaignOwnerDetailedView = () => {
                             ) : (
                               <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs font-medium text-slate-500">
                                 <AlertCircle size={14} className="text-slate-400" />
-                                No available funds to withdraw for this milestone.
+                                Loading on-chain data… please wait.
                               </div>
                             )}
                           </div>
