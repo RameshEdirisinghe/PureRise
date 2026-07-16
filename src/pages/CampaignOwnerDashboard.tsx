@@ -29,11 +29,10 @@ import WalletButton from '../components/WalletButton';
 import { fetchCampaignDetails } from '../services/campaignReadService';
 import { mongoIdToUint256 } from '../utils/formatters';
 
-// --- Components ---
+// Images returned by the backend are already signed Supabase URLs — use them directly.
 const getImageUrl = (path: string | undefined | null) => {
   if (!path) return '';
-  if (path.startsWith('http')) return path;
-  return `https://oymigkrebvrwygfhtnme.supabase.co/storage/v1/object/public/kyc-documents/${path}`;
+  return path; // already a signed URL from the backend
 };
 
 const SidebarItem = ({ icon: Icon, label, active = false, onClick }: any) => (
@@ -211,8 +210,17 @@ const CampaignOwnerDashboard = () => {
   const [newName, setNewName] = useState(user?.name || '');
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // avatarPreview: shows local blob while a new file is selected; otherwise syncs from auth user
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.profileImage || null);
   const [walletConnected] = useState(false); // replaced by WalletContext
+
+  // Keep avatar in sync when user object updates (e.g. after successful profile save)
+  useEffect(() => {
+    if (!selectedFile) {
+      // Only sync from server when no local file is pending preview
+      setAvatarPreview(user?.profileImage || null);
+    }
+  }, [user?.profileImage]);
 
   const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -277,15 +285,23 @@ const CampaignOwnerDashboard = () => {
   const handleProfileUpdate = async () => {
     try {
       setIsUpdating(true);
-      let profileImagePath = user?.profileImage;
 
-      if (selectedFile) {
-        profileImagePath = await uploadProfileImage(selectedFile);
+      const updatePayload: { name?: string; profileImage?: string } = {};
+
+      if (newName && newName !== user?.name) {
+        updatePayload.name = newName;
       }
 
-      await updateProfile({ name: newName, profileImage: profileImagePath });
+      if (selectedFile) {
+        // uploadProfileImage returns the raw storage path (e.g. profiles/uuid-name.jpg)
+        const rawPath = await uploadProfileImage(selectedFile);
+        updatePayload.profileImage = rawPath;
+      }
+
+      await updateProfile(updatePayload);
       toast.success('Profile updated successfully!');
       setSelectedFile(null);
+      // avatarPreview will auto-update via the useEffect watching user?.profileImage
     } catch (error) {
       console.error('Update failed:', error);
       toast.error('Failed to update profile');

@@ -388,7 +388,7 @@ const CreateCampaign = () => {
                       <div className="space-y-4">
                         <div className="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative">
                            <img
-                            src={imagePreview || `https://oymigkrebvrwygfhtnme.supabase.co/storage/v1/object/public/kyc-documents/${formData.coverImage}`}
+                            src={imagePreview || ''}
                             alt="Preview"
                             className="w-full h-full object-cover"
                            />

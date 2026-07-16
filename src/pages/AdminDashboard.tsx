@@ -233,10 +233,10 @@ const AdminDashboard = () => {
     }
   };
 
+  // Images returned by the API are already signed Supabase URLs — use them directly.
   const getImageUrl = (path: string) => {
     if (!path) return '';
-    if (path.startsWith('http')) return path;
-    return `https://oymigkrebvrwygfhtnme.supabase.co/storage/v1/object/public/kyc-documents/${path}`;
+    return path; // already a signed URL from the backend
   };
 
   return (
