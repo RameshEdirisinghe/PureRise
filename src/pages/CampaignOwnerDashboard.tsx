@@ -19,7 +19,9 @@ import {
   Bell,
   User,
   MoreVertical,
-  LogOut
+  LogOut,
+  Menu,
+  X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -205,6 +207,7 @@ const CampaignOwnerDashboard = () => {
   const { user, logout, updateProfile, uploadProfileImage } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Settings State
   const [newName, setNewName] = useState(user?.name || '');
@@ -324,18 +327,31 @@ const CampaignOwnerDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar - Consistent with Admin */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-100 p-6 z-10 hidden lg:block">
-        <div className="flex items-center gap-2 mb-10">
-          <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold">P</div>
-          <span className="font-bold text-ink tracking-tight">PureRaise Owner</span>
+      <aside className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-100 p-6 z-50 transform transition-transform duration-300 lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:block`}>
+        <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold">P</div>
+            <span className="font-bold text-ink tracking-tight">PureRaise Owner</span>
+          </div>
+          <button className="lg:hidden text-slate-400 hover:text-ink" onClick={() => setIsMobileMenuOpen(false)}>
+            <X size={20} />
+          </button>
         </div>
 
         <nav className="space-y-1">
-          <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
-          <SidebarItem icon={Megaphone} label="My Campaigns" active={activeTab === 'campaigns'} onClick={() => setActiveTab('campaigns')} />
-          <SidebarItem icon={PlusCircle} label="Create Campaign" active={activeTab === 'create'} onClick={() => navigate('/campaign-owner/create')} />
-          <SidebarItem icon={Settings} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+          <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'overview'} onClick={() => { setActiveTab('overview'); setIsMobileMenuOpen(false); }} />
+          <SidebarItem icon={Megaphone} label="My Campaigns" active={activeTab === 'campaigns'} onClick={() => { setActiveTab('campaigns'); setIsMobileMenuOpen(false); }} />
+          <SidebarItem icon={PlusCircle} label="Create Campaign" active={activeTab === 'create'} onClick={() => { navigate('/campaign-owner/create'); setIsMobileMenuOpen(false); }} />
+          <SidebarItem icon={Settings} label="Settings" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} />
         </nav>
 
         <div className="absolute bottom-8 left-6 right-6">
@@ -350,31 +366,42 @@ const CampaignOwnerDashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="lg:pl-64">
+      <main className="lg:pl-64 w-full">
         {/* Top Header - Consistent with Admin */}
-        <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 z-20">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold text-ink">Dashboard Overview</h1>
-            <div className="h-6 w-px bg-slate-200" />
-            <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full border border-green-100">
+        <header className="h-16 lg:h-20 bg-white border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-20">
+          <div className="flex items-center gap-3 lg:gap-4">
+            <button 
+              className="lg:hidden p-2 -ml-2 text-slate-400 hover:text-ink hover:bg-slate-50 rounded-lg transition-colors"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu size={24} />
+            </button>
+            <h1 className="text-lg lg:text-xl font-bold text-ink hidden sm:block">Dashboard Overview</h1>
+            <div className="hidden sm:block h-6 w-px bg-slate-200" />
+            <div className="flex items-center gap-2 px-2 py-1 lg:px-3 lg:py-1 bg-green-50 rounded-full border border-green-100">
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Mainnet Active</span>
+              <span className="text-[9px] lg:text-[10px] font-bold text-green-600 uppercase tracking-wider whitespace-nowrap">Mainnet Active</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <WalletButton compact />
-            <div className="w-10 h-10 rounded-full bg-brand-50 border border-slate-200 flex items-center justify-center text-brand-500 overflow-hidden shadow-sm">
+          <div className="flex items-center gap-3 lg:gap-4">
+            <div className="hidden sm:block">
+              <WalletButton compact />
+            </div>
+            <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-brand-50 border border-slate-200 flex items-center justify-center text-brand-500 overflow-hidden shadow-sm shrink-0">
               {user?.profileImage ? (
                 <img src={getImageUrl(user.profileImage)} className="w-full h-full object-cover" alt="Profile" />
               ) : (
-                <User size={20} />
+                <>
+                  <User size={16} className="lg:hidden" />
+                  <User size={20} className="hidden lg:block" />
+                </>
               )}
             </div>
           </div>
         </header>
 
-        <div className="p-8">
+        <div className="p-4 lg:p-8">
           {/* Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <MetricCard title="Total Raised" value={parseFloat(totalRaised).toFixed(3)} subValue="ETH" icon={TrendingUp} />

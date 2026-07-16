@@ -14,7 +14,8 @@ import {
   Clock,
   TrendingUp,
   X,
-  ExternalLink
+  ExternalLink,
+  Menu
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -192,6 +193,7 @@ const ContributorDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [savedCampaigns, setSavedCampaigns] = useState<string[]>([]);
   const [showWatchlist, setShowWatchlist] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -337,24 +339,37 @@ const ContributorDashboard = () => {
         }
       `}</style>
 
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar - Matches CampaignOwnerDashboard */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-100 p-6 z-40 hidden lg:block">
-        <div className="flex items-center gap-2 mb-10">
-          <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold">P</div>
-          <span className="font-bold text-ink tracking-tight">PureRaise Contributor</span>
+      <aside className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-100 p-6 z-50 transform transition-transform duration-300 lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:block`}>
+        <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold">P</div>
+            <span className="font-bold text-ink tracking-tight">PureRaise Contributor</span>
+          </div>
+          <button className="lg:hidden text-slate-400 hover:text-ink" onClick={() => setIsMobileMenuOpen(false)}>
+            <X size={20} />
+          </button>
         </div>
 
         <nav className="space-y-1">
-          <SidebarItem icon={LayoutDashboard} label="Discovery" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
-          <SidebarItem icon={HandHeart} label="My Donations" active={activeTab === 'donations'} onClick={() => setActiveTab('donations')} />
-          <SidebarItem icon={Bookmark} label="Saved Campaigns" active={activeTab === 'saved'} onClick={() => setActiveTab('saved')} />
-          <SidebarItem icon={Settings} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+          <SidebarItem icon={LayoutDashboard} label="Discovery" active={activeTab === 'overview'} onClick={() => { setActiveTab('overview'); setIsMobileMenuOpen(false); }} />
+          <SidebarItem icon={HandHeart} label="My Donations" active={activeTab === 'donations'} onClick={() => { setActiveTab('donations'); setIsMobileMenuOpen(false); }} />
+          <SidebarItem icon={Bookmark} label="Saved Campaigns" active={activeTab === 'saved'} onClick={() => { setActiveTab('saved'); setIsMobileMenuOpen(false); }} />
+          <SidebarItem icon={Settings} label="Settings" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} />
         </nav>
 
         <div className="absolute bottom-8 left-6 right-6">
           <button 
             onClick={logout}
-            className="w-full py-3 px-4 rounded-xl border border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-widest hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all"
+            className="w-full py-3 px-4 rounded-xl border border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-widest hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex items-center justify-center gap-2"
           >
             Logout
           </button>
@@ -362,25 +377,33 @@ const ContributorDashboard = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="lg:pl-64 min-h-screen">
+      <main className="lg:pl-64 min-h-screen w-full">
         
         {/* Sticky Header */}
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 z-30">
-          <div className="flex-1 max-w-xl relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search campaigns..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-50 border-none rounded-2xl py-3 pl-12 pr-4 text-sm font-medium focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all outline-none"
-            />
+        <header className="h-16 lg:h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30">
+          <div className="flex items-center gap-3 lg:gap-4 flex-1">
+            <button 
+              className="lg:hidden p-2 -ml-2 text-slate-400 hover:text-ink hover:bg-slate-50 rounded-lg transition-colors"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu size={24} />
+            </button>
+            <div className="flex-1 max-w-xl relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search campaigns..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-50 border-none rounded-2xl py-2 lg:py-3 pl-12 pr-4 text-sm font-medium focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all outline-none"
+              />
+            </div>
           </div>
 
-          <div className="flex items-center gap-4 ml-8">
+          <div className="flex items-center gap-2 lg:gap-4 ml-4 lg:ml-8">
             <button 
               onClick={() => setShowWatchlist(!showWatchlist)}
-              className={`relative p-2.5 rounded-xl border transition-all ${
+              className={`relative p-2 lg:p-2.5 rounded-xl border transition-all ${
                 showWatchlist ? 'bg-brand-50 border-brand-200 text-brand-600' : 'bg-white border-slate-100 text-slate-400 hover:border-brand-200'
               }`}
             >
@@ -392,20 +415,22 @@ const ContributorDashboard = () => {
               )}
             </button>
 
-            <WalletButton compact />
+            <div className="hidden sm:block">
+              <WalletButton compact />
+            </div>
 
-            <div className="w-11 h-11 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 overflow-hidden shadow-sm group cursor-pointer hover:border-brand-300 transition-all" onClick={() => setActiveTab('settings')}>
+            <div className="w-9 h-9 lg:w-11 lg:h-11 rounded-full bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 overflow-hidden shadow-sm group cursor-pointer hover:border-brand-300 transition-all shrink-0" onClick={() => setActiveTab('settings')}>
               {user?.profileImage ? (
                 <img src={user.profileImage} className="w-full h-full object-cover" alt="Profile" />
               ) : (
-                <span className="text-sm font-black">{user?.name?.charAt(0)}</span>
+                <span className="text-xs lg:text-sm font-black">{user?.name?.charAt(0)}</span>
               )}
             </div>
           </div>
         </header>
 
         {/* Content Section */}
-        <div className="p-8">
+        <div className="p-4 lg:p-8">
           
           {activeTab === 'overview' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
