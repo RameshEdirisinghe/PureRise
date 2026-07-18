@@ -11,7 +11,7 @@ import { getApiError } from '../utils/errorHelper';
 import { compressImage } from '../utils/imageCompression';
 
 // --- Types ---
-type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 'success';
+type OnboardingStep = 1 | 2 | 3 | 4 | 'success';
 
 interface OnboardingData {
   // Step 1
@@ -29,8 +29,6 @@ interface OnboardingData {
   profileBio: string;
   purposeCategory: string;
   // Step 4
-  walletAddress: string;
-  // Step 5
   agreed: boolean;
 }
 
@@ -84,8 +82,7 @@ const ProgressIndicator = ({ currentStep }: { currentStep: OnboardingStep }) => 
     { id: 1, icon: User, label: 'Personal' },
     { id: 2, icon: ShieldCheck, label: 'Identity' },
     { id: 3, icon: Target, label: 'Profile' },
-    { id: 4, icon: Wallet, label: 'Wallet' },
-    { id: 5, icon: FileCheck, label: 'Submit' },
+    { id: 4, icon: FileCheck, label: 'Submit' },
   ];
 
   return (
@@ -253,7 +250,6 @@ const CampaignOwnerOnboarding = () => {
     profileHeadline: '',
     profileBio: '',
     purposeCategory: '',
-    walletAddress: '',
     agreed: false,
   });
 
@@ -266,10 +262,10 @@ const CampaignOwnerOnboarding = () => {
   };
 
   const nextStep = async () => {
-    if (typeof step === 'number' && step < 5) {
+    if (typeof step === 'number' && step < 4) {
       setStep((step + 1) as OnboardingStep);
       window.scrollTo(0, 0);
-    } else if (step === 5) {
+    } else if (step === 4) {
       handleFinalSubmit();
     }
   };
@@ -651,56 +647,6 @@ const CampaignOwnerOnboarding = () => {
   const renderStep4 = () => (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-ink tracking-tight">Connect Your Wallet</h2>
-        <p className="text-sm text-ink-muted mt-1">Integration with Web3 for secure fund management.</p>
-      </div>
-
-      <div className="space-y-8">
-        <div className="bg-slate-50 border border-slate-100 rounded-3xl p-10 flex flex-col items-center">
-          <div className="w-20 h-20 rounded-3xl bg-white shadow-xl shadow-brand-500/10 flex items-center justify-center mb-6">
-            <Wallet size={36} className="text-brand-500" />
-          </div>
-          <h3 className="text-lg font-bold text-ink mb-2">Web3 Wallet</h3>
-          <p className="text-[0.75rem] text-slate-400 text-center max-w-xs mb-8">
-            Connect your MetaMask or other compatible wallet to receive and manage funds.
-          </p>
-          
-          <button className="flex items-center gap-3 px-8 py-4 rounded-full bg-brand-500 text-white font-bold hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/20 active:scale-95 group">
-            Connect MetaMask
-            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-2xl border border-slate-100 bg-white">
-            <label className="block text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest mb-1">Target Network</label>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>
-              <span className="font-bold text-sm text-ink">Ethereum Sepolia</span>
-            </div>
-          </div>
-          <div className="p-4 rounded-2xl border border-slate-100 bg-white">
-            <label className="block text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest mb-1">Security Standard</label>
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={16} className="text-green-500" />
-              <span className="font-bold text-sm text-ink">Smart Contract Managed</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-3 text-slate-400 text-[0.7rem] bg-brand-50/30 p-4 rounded-xl border border-brand-100/50">
-          <Info size={16} className="shrink-0 text-brand-500" />
-          <p className="leading-relaxed">
-            Funds will be managed securely through decentralized smart contracts. PureRaise does not have direct access to your funds.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStep5 = () => (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="mb-8">
         <h2 className="text-2xl font-bold text-ink tracking-tight">Review & Submit</h2>
         <p className="text-sm text-ink-muted mt-1">Verify your details before final submission.</p>
       </div>
@@ -719,18 +665,6 @@ const CampaignOwnerOnboarding = () => {
 
             <div className="text-slate-400 font-medium">Primary Focus</div>
             <div className="text-ink font-bold text-right capitalize">{data.purposeCategory || "—"}</div>
-            
-            <div className="text-slate-400 font-medium">Wallet Address</div>
-            <div className="text-ink font-bold text-right overflow-hidden text-ellipsis whitespace-nowrap ml-4">
-              {data.walletAddress || "Not connected"}
-            </div>
-          </div>
-          
-          <div className="pt-4 border-t border-slate-200">
-            <div className="text-slate-400 text-[0.7rem] font-bold uppercase tracking-widest mb-1">Wallet for Smart Contracts</div>
-            <div className="text-ink font-mono text-xs break-all bg-white p-3 rounded-lg border border-slate-100 italic">
-              0x742d35Cc6634C0532925a3b844Bc454e4438f44e
-            </div>
           </div>
         </div>
 
@@ -827,7 +761,7 @@ const CampaignOwnerOnboarding = () => {
           <div className="bg-white rounded-[32px] shadow-2xl shadow-black/5 border border-slate-100 p-8 md:p-12 relative overflow-hidden">
             {step !== 'success' && (
               <div className="absolute top-0 right-0 px-6 py-3 bg-brand-50 text-brand-600 text-[0.65rem] font-bold uppercase tracking-widest rounded-bl-2xl">
-                Step {step} of 5
+                Step {step} of 4
               </div>
             )}
 
@@ -835,7 +769,6 @@ const CampaignOwnerOnboarding = () => {
             {step === 2 && renderStep2()}
             {step === 3 && renderStep3()}
             {step === 4 && renderStep4()}
-            {step === 5 && renderStep5()}
             {step === 'success' && renderSuccess()}
 
             {showCamera && (

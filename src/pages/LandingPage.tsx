@@ -410,14 +410,14 @@ const LandingPage: React.FC = () => {
       {/* FOOTER */}
       <footer className="bg-white border-t border-surface-muted pt-16 pb-8 px-8">
         <div className="max-w-[1200px] mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-12">
             {/* Brand */}
-            <div>
+            <div className="md:col-span-12 lg:col-span-6">
               <Link to="/" className="flex items-center gap-[10px] mb-3 no-underline">
                 <div className="w-[34px] h-[34px] rounded-lg bg-brand-500 text-white font-display font-extrabold text-[18px] flex items-center justify-center">P</div>
                 <span className="font-display font-bold text-[1.05rem] text-ink">PureRaise</span>
               </Link>
-              <p className="text-ink-muted text-[.85rem] leading-[1.7] max-w-[260px]">
+              <p className="text-ink-muted text-[.85rem] leading-[1.7] max-w-[320px]">
                 The decentralized crowdfunding platform empowering creators globally through blockchain technology and smart contracts.
               </p>
               <div className="flex gap-3 mt-5">
@@ -429,7 +429,7 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             {/* Platform links */}
-            <div>
+            <div className="md:col-span-6 lg:col-span-3">
               <h4 className="font-display font-bold text-[.9rem] mb-5 text-ink tracking-tight">Platform</h4>
               <ul className="list-none space-y-[.65rem] p-0 m-0">
                 <li><a href="#" className="text-ink-muted text-[.85rem] hover:text-brand-500 no-underline transition-colors">Home</a></li>
@@ -440,7 +440,7 @@ const LandingPage: React.FC = () => {
               </ul>
             </div>
             {/* Company links */}
-            <div>
+            <div className="md:col-span-6 lg:col-span-3">
               <h4 className="font-display font-bold text-[.9rem] mb-5 text-ink tracking-tight">Company</h4>
               <ul className="list-none space-y-[.65rem] p-0 m-0">
                 <li><a href="#" className="text-ink-muted text-[.85rem] hover:text-brand-500 no-underline transition-colors">About Us</a></li>
@@ -449,20 +449,6 @@ const LandingPage: React.FC = () => {
                 <li><a href="#" className="text-ink-muted text-[.85rem] hover:text-brand-500 no-underline transition-colors">Terms of Service</a></li>
                 <li><a href="#" className="text-ink-muted text-[.85rem] hover:text-brand-500 no-underline transition-colors">Contact</a></li>
               </ul>
-            </div>
-            {/* Newsletter */}
-            <div>
-              <h4 className="font-display font-bold text-[.9rem] mb-5 text-ink tracking-tight">Stay Updated</h4>
-              <p className="text-ink-muted text-[.82rem] mb-3">Get the latest on new campaigns and platform updates.</p>
-              <div className="flex gap-2">
-                <input
-                  className="flex-1 px-4 py-[.55rem] rounded-full border border-surface-muted text-[.82rem] outline-none focus:border-brand-500 transition-colors bg-white shadow-inner"
-                  type="email"
-                  placeholder="Enter email"
-                />
-                <button className="bg-brand-500 text-white px-[1.1rem] py-[.55rem] rounded-full text-[.82rem] font-bold hover:bg-brand-600 transition-colors cursor-pointer border-none">Join</button>
-              </div>
-              <p className="text-ink-faint text-[.75rem] mt-2">No spam. Unsubscribe anytime.</p>
             </div>
           </div>
           <div className="border-t border-surface-muted pt-6 flex flex-wrap justify-between items-center gap-3 text-ink-faint text-[.78rem]">

@@ -31,23 +31,11 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
       
       {/* Content Body */}
       <div className="p-6 pt-2 flex-1 flex flex-col">
-        {/* Author Info */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-6 h-6 rounded-full overflow-hidden border border-white shadow-sm bg-surface-muted">
-            <img src={`https://api.dicebear.com/7.x/identicon/svg?seed=${authorSeed}`} alt={author} />
-          </div>
-          <span className="text-[0.7rem] text-ink-muted font-medium tracking-tight">{author}</span>
-        </div>
 
         {/* Title */}
-        <h3 className="font-display font-semibold text-[1.1rem] text-ink leading-snug mb-2 flex-1 group-hover:text-brand-600 transition-colors">
+        <h3 className="font-display font-semibold text-[1.1rem] text-ink leading-snug flex-1 group-hover:text-brand-600 transition-colors">
           {title}
         </h3>
-
-        {/* Description */}
-        <p className="text-[0.85rem] text-ink-muted leading-relaxed mb-6">
-          {desc}
-        </p>
 
         <div className="mt-auto space-y-4">
           {/* Funding Stats */}
