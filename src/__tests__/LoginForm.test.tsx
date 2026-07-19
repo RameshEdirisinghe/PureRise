@@ -5,6 +5,7 @@ import { vi } from 'vitest';
 import LoginForm from '../components/LoginForm';
 import AuthContext from '../context/AuthContext';
 import * as routerDom from 'react-router-dom';
+import { describe } from 'node:test';
 
 // Mock react-router-dom
 vi.mock('react-router-dom', async () => {
@@ -45,7 +46,7 @@ describe('LoginForm (Critical)', () => {
 
     expect(screen.getByRole('heading', { name: /welcome back/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
@@ -53,7 +54,7 @@ describe('LoginForm (Critical)', () => {
     const user = userEvent.setup();
     renderWithAuth();
 
-    const passwordInput = screen.getByLabelText(/password/i);
+    const passwordInput = screen.getByLabelText(/^password$/i);
     expect(passwordInput).toHaveAttribute('type', 'password');
 
     const toggleButton = screen.getByLabelText('Show password');
@@ -70,7 +71,7 @@ describe('LoginForm (Critical)', () => {
     renderWithAuth();
 
     await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'Password123!');
+    await user.type(screen.getByLabelText(/^password$/i), 'Password123!');
     
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
@@ -88,7 +89,7 @@ describe('LoginForm (Critical)', () => {
     renderWithAuth();
 
     await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'wrong');
+    await user.type(screen.getByLabelText(/^password$/i), 'wrong');
     
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 

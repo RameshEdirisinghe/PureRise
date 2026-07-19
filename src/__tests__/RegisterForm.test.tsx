@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 import RegisterForm from '../components/RegisterForm';
-import { AuthContext } from '../context/AuthContext';
+import AuthContext from '../context/AuthContext';
 import * as routerDom from 'react-router-dom';
 
 // Mock react-router-dom
@@ -44,7 +44,7 @@ describe('RegisterForm (Critical)', () => {
   it('renders registration form elements correctly', () => {
     renderWithAuth();
     
-    expect(screen.getByRole('heading', { name: /create an account/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /create your account/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^password/i)).toBeInTheDocument(); // reg-password
@@ -65,9 +65,7 @@ describe('RegisterForm (Critical)', () => {
     await user.click(screen.getByRole('button', { name: /create free account/i }));
 
     expect(mockRegister).not.toHaveBeenCalled();
-    // In actual implementation, error state is set but maybe not immediately visible in DOM 
-    // unless an error banner renders. Assuming an alert icon or text appears:
-    expect(await screen.findByText(/passwords do not match/i)).toBeInTheDocument();
+    expect(await screen.findByText(/passwords don't match/i)).toBeInTheDocument();
   });
 
   it('submits form successfully and navigates (Critical)', async () => {
@@ -87,15 +85,15 @@ describe('RegisterForm (Critical)', () => {
     
     await user.click(screen.getByRole('button', { name: /create free account/i }));
 
-    expect(mockRegister).toHaveBeenCalledWith(
-      'Test User',
-      'test@example.com',
-      'Password123!',
-      'projectOwner'
-    );
+    expect(mockRegister).toHaveBeenCalledWith({
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'Password123!',
+      role: 'projectOwner'
+    });
     
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/campaign-owner/onboarding', { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith('/onboarding/campaign-owner', { replace: true });
     });
   });
 
