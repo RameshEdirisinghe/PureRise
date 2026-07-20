@@ -94,9 +94,6 @@ describe('LoginForm (Critical)', () => {
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     expect(mockLogin).toHaveBeenCalledWith('test@example.com', 'wrong');
-    // Note: The original component expects getApiError to set the error message.
-    // If we assume error message displays somewhere, we'd check for it here.
-    // Wait for the button state to reset loading
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /sign in/i })).not.toBeDisabled();
     });

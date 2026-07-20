@@ -23,7 +23,7 @@ interface OnboardingData {
   idType: 'passport' | 'nic' | 'driver_license';
   idFrontImage: string; // Using URLs for now as placeholders
   idBackImage: string;
-  selfieImage?: string;
+  selfieImage: string;
   // Step 3
   profileHeadline: string;
   profileBio: string;
@@ -535,7 +535,7 @@ const CampaignOwnerOnboarding = () => {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-xs font-bold text-ink uppercase tracking-wider">Selfie with ID (Optional)</label>
+          <label className="block text-xs font-bold text-ink uppercase tracking-wider">Selfie with ID </label>
           <div className="flex flex-col sm:flex-row gap-4">
             <label 
               htmlFor="selfieUpload"
