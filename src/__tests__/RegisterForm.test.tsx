@@ -6,7 +6,6 @@ import RegisterForm from '../components/RegisterForm';
 import AuthContext from '../context/AuthContext';
 import * as routerDom from 'react-router-dom';
 
-// Mock react-router-dom
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -47,7 +46,7 @@ describe('RegisterForm (Critical)', () => {
     expect(screen.getByRole('heading', { name: /create your account/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^password/i)).toBeInTheDocument(); // reg-password
+    expect(screen.getByLabelText(/^password/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/confirm/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/account type/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create free account/i })).toBeInTheDocument();
@@ -79,7 +78,6 @@ describe('RegisterForm (Critical)', () => {
     await user.type(screen.getByLabelText(/^password/i), 'Password123!');
     await user.type(screen.getByLabelText(/confirm/i), 'Password123!');
     
-    // Select role (default is contributor)
     const select = screen.getByLabelText(/account type/i);
     await user.selectOptions(select, 'projectOwner');
     
@@ -111,7 +109,6 @@ describe('RegisterForm (Critical)', () => {
     await user.click(screen.getByRole('button', { name: /create free account/i }));
 
     expect(mockRegister).toHaveBeenCalled();
-    // Wait for the button state to reset
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /create free account/i })).not.toBeDisabled();
     });

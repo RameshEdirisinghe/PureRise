@@ -7,7 +7,6 @@ import AuthContext from '../context/AuthContext';
 import * as routerDom from 'react-router-dom';
 import { describe } from 'node:test';
 
-// Mock react-router-dom
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
