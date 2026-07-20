@@ -5,8 +5,7 @@ import { vi } from 'vitest';
 import CreateCampaign from '../pages/CreateCampaign';
 import AuthContext from '../context/AuthContext';
 import * as campaignApi from '../api/campaign';
-
-// ── Module mocks ────────────────────────────────────────────────────────────
+import * as routerDom from 'react-router-dom';
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -19,7 +18,6 @@ vi.mock('../api/campaign', () => ({
   uploadProposalPdfApi: vi.fn(),
 }));
 
-// WalletButton & WalletContext require Web3 providers – stub them out
 vi.mock('../components/WalletButton', () => ({
   default: () => <button>Connect Wallet</button>,
 }));
@@ -27,10 +25,6 @@ vi.mock('../components/WalletButton', () => ({
 vi.mock('../context/WalletContext', () => ({
   useWallet: () => ({ isConnected: true, isCorrectNetwork: true }),
 }));
-
-import * as routerDom from 'react-router-dom';
-
-// ── Helpers ─────────────────────────────────────────────────────────────────
 
 const mockUser = {
   id: 'owner1',
@@ -63,15 +57,11 @@ const renderWithAuth = (contextOverrides: any = {}) => {
   );
 };
 
-// ── Tests ────────────────────────────────────────────────────────────────────
-
 describe('CreateCampaign Page (Critical)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (routerDom.useNavigate as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockNavigate);
   });
-
-  // ── Step 1 rendering ──────────────────────────────────────────────────────
 
   describe('Step 1 – The Vision', () => {
     it('renders the Campaign Wizard heading and step 1 fields', () => {
@@ -83,7 +73,6 @@ describe('CreateCampaign Page (Critical)', () => {
 
     it('shows step 1 stepper indicator as active', () => {
       renderWithAuth();
-      // Step "1" circle should be visible (active step)
       expect(screen.getByText('THE VISION')).toBeInTheDocument();
     });
 
@@ -93,8 +82,6 @@ describe('CreateCampaign Page (Critical)', () => {
     });
   });
 
-  // ── Navigation between steps ──────────────────────────────────────────────
-
   describe('Step navigation (High)', () => {
     it('advances to step 2 when Next is clicked', async () => {
       const user = userEvent.setup();
@@ -102,7 +89,6 @@ describe('CreateCampaign Page (Critical)', () => {
 
       await user.click(screen.getByRole('button', { name: /next/i }));
 
-      // Step 2 content should appear (Funding section)
       await waitFor(() => {
         expect(screen.getByText(/FUNDING/i)).toBeInTheDocument();
       });
@@ -133,14 +119,10 @@ describe('CreateCampaign Page (Critical)', () => {
     });
   });
 
-  // ── Milestone management ──────────────────────────────────────────────────
-
   describe('Milestone section (Critical)', () => {
     const navigateToStep3 = async (user: ReturnType<typeof userEvent.setup>) => {
-      // Next → Step 2
       await user.click(screen.getByRole('button', { name: /next/i }));
       await waitFor(() => expect(screen.getByText(/FUNDING/i)).toBeInTheDocument());
-      // Next → Step 3
       await user.click(screen.getByRole('button', { name: /next/i }));
       await waitFor(() => expect(screen.getByText(/MILESTONES/i)).toBeInTheDocument());
     };
@@ -151,7 +133,6 @@ describe('CreateCampaign Page (Critical)', () => {
 
       await navigateToStep3(user);
 
-      // There should be at least one milestone title field
       const titleInputs = screen.getAllByPlaceholderText(/milestone title/i);
       expect(titleInputs.length).toBeGreaterThanOrEqual(1);
     });
@@ -175,11 +156,9 @@ describe('CreateCampaign Page (Critical)', () => {
 
       await navigateToStep3(user);
 
-      // Add one extra milestone so we have 2 to work with
       await user.click(screen.getByRole('button', { name: /add milestone/i }));
       const before = screen.getAllByPlaceholderText(/milestone title/i).length;
 
-      // Click the first remove button
       const removeButtons = screen.getAllByRole('button', { name: /remove/i });
       await user.click(removeButtons[0]);
 
@@ -187,8 +166,6 @@ describe('CreateCampaign Page (Critical)', () => {
       expect(after).toBe(before - 1);
     });
   });
-
-  // ── Deploy / submit (Critical) ────────────────────────────────────────────
 
   describe('Deploy / submit (Critical)', () => {
     it('shows a success message after a successful campaign creation', async () => {
@@ -203,15 +180,12 @@ describe('CreateCampaign Page (Critical)', () => {
 
       renderWithAuth();
 
-      // Fill Step 1
       await user.type(screen.getByPlaceholderText(/give your campaign a compelling title/i), 'Test Campaign');
       await user.click(screen.getByRole('button', { name: /next/i }));
 
-      // Step 2 — next
       await waitFor(() => expect(screen.getByText(/FUNDING/i)).toBeInTheDocument());
       await user.click(screen.getByRole('button', { name: /next/i }));
 
-      // Step 3 — milestones: fill to 100%
       await waitFor(() => expect(screen.getByText(/MILESTONES/i)).toBeInTheDocument());
 
       const percentageInput = screen.getAllByPlaceholderText(/e\.g\. 30/i)[0];
@@ -220,7 +194,6 @@ describe('CreateCampaign Page (Critical)', () => {
 
       await user.click(screen.getByRole('button', { name: /next/i }));
 
-      // Step 4 — review and deploy
       await waitFor(() => expect(screen.getByText(/REVIEW/i)).toBeInTheDocument());
 
       const deployBtn = screen.getByRole('button', { name: /deploy/i });
@@ -242,7 +215,6 @@ describe('CreateCampaign Page (Critical)', () => {
 
       renderWithAuth();
 
-      // Navigate to step 4 (review)
       await user.click(screen.getByRole('button', { name: /next/i }));
       await waitFor(() => expect(screen.getByText(/FUNDING/i)).toBeInTheDocument());
       await user.click(screen.getByRole('button', { name: /next/i }));
@@ -264,7 +236,6 @@ describe('CreateCampaign Page (Critical)', () => {
       const user = userEvent.setup();
       renderWithAuth();
 
-      // Navigate to step 4 without fixing milestones
       await user.click(screen.getByRole('button', { name: /next/i }));
       await waitFor(() => expect(screen.getByText(/FUNDING/i)).toBeInTheDocument());
       await user.click(screen.getByRole('button', { name: /next/i }));
@@ -281,12 +252,9 @@ describe('CreateCampaign Page (Critical)', () => {
         ).toBeInTheDocument();
       });
 
-      // API should NOT have been called
       expect(campaignApi.createCampaignApi).not.toHaveBeenCalled();
     });
   });
-
-  // ── Cover image upload ────────────────────────────────────────────────────
 
   describe('Cover image upload (High)', () => {
     it('calls uploadCampaignMediaApi when a file is selected', async () => {
