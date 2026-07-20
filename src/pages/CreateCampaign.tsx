@@ -249,7 +249,6 @@ const CreateCampaign = () => {
           <SidebarItem icon={LayoutDashboard} label="Dashboard" onClick={() => navigate('/campaign-owner/dashboard')} />
           <SidebarItem icon={Megaphone} label="My Campaigns" onClick={() => navigate('/campaign-owner/dashboard')} />
           <SidebarItem icon={PlusCircle} label="Create Campaign" active />
-          <SidebarItem icon={History} label="Withdrawals" onClick={() => navigate('/campaign-owner/dashboard')} />
           <SidebarItem icon={Settings} label="Settings" onClick={() => navigate('/campaign-owner/dashboard')} />
         </nav>
 
@@ -269,7 +268,7 @@ const CreateCampaign = () => {
         {/* Header */}
         <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 z-20">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold text-ink">Campaign Wizard</h1>
+            <h1 className="text-xl font-bold text-ink">Dashboard Overview</h1>
             <div className="h-6 w-px bg-slate-200" />
             <div className="flex items-center gap-2 px-3 py-1 bg-brand-50 rounded-full border border-brand-100">
               <ShieldCheck size={12} className="text-brand-600" />

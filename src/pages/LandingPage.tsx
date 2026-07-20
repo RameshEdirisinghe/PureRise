@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ShieldCheck, Globe, Activity, Users, Wallet, Target, Rocket, Coins, CheckCircle2,
-  ArrowRight, LogOut, TrendingUp, Clock, Zap, Lock, AlertCircle
+  ArrowRight, TrendingUp, Clock, Zap, Lock, AlertCircle
 } from 'lucide-react';
 
 import FeatureCard from '../components/FeatureCard';
@@ -12,7 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { usePublicCampaigns } from '../hooks/usePublicCampaigns';
 
 const LandingPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { campaigns, loading: campaignsLoading, error: campaignsError } = usePublicCampaigns(3);
 
@@ -30,10 +30,6 @@ const LandingPage: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/');
-  };
 
   return (
     <div className="min-h-screen bg-surface font-sans text-ink selection:bg-brand-100 selection:text-brand-700">
@@ -66,13 +62,6 @@ const LandingPage: React.FC = () => {
                 <Link to={getDashboardUrl()} className="text-[0.875rem] font-medium text-ink hover:text-brand-500 transition-colors no-underline">
                   Dashboard
                 </Link>
-                <button 
-                  onClick={handleLogout}
-                  className="flex items-center gap-1.5 text-[0.875rem] font-medium text-ink-muted hover:text-red-500 transition-colors"
-                >
-                  <LogOut size={16} />
-                  Logout
-                </button>
               </>
             ) : (
               <>
