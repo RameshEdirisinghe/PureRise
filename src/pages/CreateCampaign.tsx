@@ -242,7 +242,7 @@ const CreateCampaign = () => {
       <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-100 p-6 z-10 hidden lg:block">
         <div className="flex items-center gap-2 mb-10">
           <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold">P</div>
-          <span className="font-bold text-ink tracking-tight">PureRaise Owner</span>
+          <span className="font-bold text-ink tracking-tight">PureRaise</span>
         </div>
 
         <nav className="space-y-1">
@@ -268,7 +268,7 @@ const CreateCampaign = () => {
         {/* Header */}
         <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 z-20">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold text-ink">Dashboard Overview</h1>
+            <h1 className="text-xl font-bold text-ink">Campaign Owner</h1>
             <div className="h-6 w-px bg-slate-200" />
             <div className="flex items-center gap-2 px-3 py-1 bg-brand-50 rounded-full border border-brand-100">
               <ShieldCheck size={12} className="text-brand-600" />

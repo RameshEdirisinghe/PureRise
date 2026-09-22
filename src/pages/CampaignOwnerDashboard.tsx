@@ -31,10 +31,9 @@ import WalletButton from '../components/WalletButton';
 import { fetchCampaignDetails } from '../services/campaignReadService';
 import { mongoIdToUint256 } from '../utils/formatters';
 
-// Images returned by the backend are already signed Supabase URLs — use them directly.
 const getImageUrl = (path: string | undefined | null) => {
   if (!path) return '';
-  return path; // already a signed URL from the backend
+  return path;
 };
 
 const SidebarItem = ({ icon: Icon, label, active = false, onClick }: any) => (
@@ -340,7 +339,7 @@ const CampaignOwnerDashboard = () => {
         <div className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold">P</div>
-            <span className="font-bold text-ink tracking-tight">PureRaise Owner</span>
+            <span className="font-bold text-ink tracking-tight">PureRaise</span>
           </div>
           <button className="lg:hidden text-slate-400 hover:text-ink" onClick={() => setIsMobileMenuOpen(false)}>
             <X size={20} />
@@ -376,7 +375,7 @@ const CampaignOwnerDashboard = () => {
             >
               <Menu size={24} />
             </button>
-            <h1 className="text-lg lg:text-xl font-bold text-ink hidden sm:block">Dashboard Overview</h1>
+            <h1 className="text-lg lg:text-xl font-bold text-ink hidden sm:block">Campaign Owner</h1>
             <div className="hidden sm:block h-6 w-px bg-slate-200" />
             <div className="flex items-center gap-2 px-2 py-1 lg:px-3 lg:py-1 bg-green-50 rounded-full border border-green-100">
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
